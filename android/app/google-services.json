@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "944308767853",
+    "project_id": "sport-project-623a2",
+    "storage_bucket": "sport-project-623a2.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:944308767853:android:c2e193e0e1be67b4c28364",
+        "android_client_info": {
+          "package_name": "com.example.sports_project"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAWFJQ2w4-fYYSwXz64RMhDmzCIhJzyxo4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
