@@ -26,6 +26,12 @@ class InitialPage extends StatelessWidget {
                   fontFamily: 'Pacifico',
                   color: kPrimaryColor),
             ),
+            Text(
+              'FOR TALENT',
+              style: TextStyle(
+                color: kPrimaryColor,
+              ),
+            ),
             SizedBox(height: 100,),
             DefaultButton(
               label: 'Login',

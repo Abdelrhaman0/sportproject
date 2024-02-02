@@ -41,6 +41,10 @@ dependencies:
   shared_preferences:
   hexcolor:
   firebase_core:
+  firebase_auth:
+  conditional_builder_null_safety:
+  fluttertoast:
+  dio:
 
 dev_dependencies:
   flutter_test:
