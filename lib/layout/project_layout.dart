@@ -12,7 +12,7 @@ class ProjectLayout extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocConsumer<ProjectCubit, ProjectStates>(
         listener: (context, state) {
-      if (state is ProjectAddPost) {
+      if (state is ProjectAddPostState) {
         Navigator.pushNamed(context, AddPostScreen.id);
       }
     }, builder: (context, state) {

@@ -10,7 +10,7 @@ import 'package:sports_project/pages/news/news_screen.dart';
 import 'package:sports_project/pages/profile/profile_screen.dart';
 
 class ProjectCubit extends Cubit<ProjectStates> {
-  ProjectCubit() : super(ProjectInitialStates());
+  ProjectCubit() : super(ProjectInitialState());
 
   static ProjectCubit get(context) => BlocProvider.of(context);
 
@@ -28,7 +28,7 @@ class ProjectCubit extends Cubit<ProjectStates> {
 
   void changeBottomNav(int index) {
     if (index == 2) {
-      emit(ProjectAddPost());
+      emit(ProjectAddPostState());
     } else {
       currentIndex = index;
       emit(ProjectChangeBottomNavState());
