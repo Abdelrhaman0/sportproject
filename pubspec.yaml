@@ -45,6 +45,16 @@ dependencies:
   conditional_builder_null_safety:
   fluttertoast:
   dio:
+  firebase_storage:
+  video_player:
+  image_picker:
+  firebase_messaging:
+  url_launcher:
+  news_api_flutter_package:
+  flutter_webview_plugin: ^0.4.0
+  uuid:
+  intl:
+
 
 dev_dependencies:
   flutter_test:

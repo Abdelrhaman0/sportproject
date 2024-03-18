@@ -38,7 +38,7 @@ class RegisterCubit extends Cubit<RegisterStates>{
       email: email,
       phone: phone,
       uid: uid,
-      image: 'https://icons8.com/icon/AZazdsitsrgg/user',
+      image: 'https://plus.unsplash.com/premium_photo-1684241183904-9fc59d3a96e5?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
       cover: 'https://img.freepik.com/free-photo/friends-having-fun-with-traditional-games_23-2149332630.jpg?t=st=1696504517~exp=1696505117~hmac=9843b537ba4946ef3e1f3dfb8d01c4f34da63abd69e54d073b618960e87bdca8',
       bio: 'write your bio...',
       isEmailVerified: false,
