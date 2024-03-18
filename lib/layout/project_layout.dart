@@ -4,6 +4,7 @@ import 'package:sports_project/component/conest.dart';
 import 'package:sports_project/layout/cubit/cubit.dart';
 import 'package:sports_project/layout/cubit/states.dart';
 import 'package:sports_project/pages/add_post/add_post_screen.dart';
+import 'package:sports_project/pages/search/search_screen.dart';
 
 class ProjectLayout extends StatelessWidget {
   static String id = 'ProjectLayout';
@@ -23,6 +24,11 @@ class ProjectLayout extends StatelessWidget {
             cubit.title[cubit.currentIndex],
             style: TextStyle(color: kPrimaryColor),
           ),
+          actions: [
+            IconButton(onPressed: (){
+              Navigator.pushNamed(context, SearchScreen.id);
+            }, icon: Icon(Icons.search,size: 30,))
+          ],
         ),
         body: cubit.screens[cubit.currentIndex],
         bottomNavigationBar: BottomNavigationBar(

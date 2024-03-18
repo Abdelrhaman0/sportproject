@@ -82,3 +82,28 @@ class ProjectGetLikesErrorState extends ProjectStates{
 
   ProjectGetLikesErrorState(this.error);
 }
+
+class NewsGetSportsLoadingState extends ProjectStates{}
+
+class NewsGetSportsSuccessState extends ProjectStates{}
+
+class NewsGetSportsErrorState extends ProjectStates{
+  final String error;
+  NewsGetSportsErrorState(this.error);
+}
+
+class ProjectCreateCommentLoadingState extends ProjectStates{}
+
+class ProjectCreateCommentSuccessState extends ProjectStates{}
+
+class ProjectCreateCommentErrorState extends ProjectStates{}
+
+class ProjectGetCommentLoadingState extends ProjectStates{}
+
+class ProjectGetCommentSuccessState extends ProjectStates{}
+
+class ProjectGetCommentErrorState extends ProjectStates{
+  final String error;
+
+  ProjectGetCommentErrorState(this.error);
+}

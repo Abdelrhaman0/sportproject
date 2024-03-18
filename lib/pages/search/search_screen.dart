@@ -1,4 +1,7 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:conditional_builder_null_safety/conditional_builder_null_safety.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sports_project/component/other_component.dart';
@@ -7,9 +10,9 @@ import 'package:sports_project/layout/cubit/states.dart';
 import 'package:sports_project/models/user_model.dart';
 import 'package:sports_project/pages/chats/chat_detail.dart';
 
-class ChatsScreen extends StatelessWidget {
+class SearchScreen extends StatelessWidget {
+  static String id = 'SearchScreen';
 
-  static String id = 'ChatsScreen';
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<ProjectCubit,ProjectStates>(
@@ -55,3 +58,4 @@ class ChatsScreen extends StatelessWidget {
   );
 
 }
+
