@@ -107,3 +107,11 @@ class ProjectGetCommentErrorState extends ProjectStates{
 
   ProjectGetCommentErrorState(this.error);
 }
+
+class ProjectGetCommentEmptyState extends ProjectStates{}
+
+class ProjectSignOutLoadingState extends ProjectStates{}
+
+class ProjectSignOutSuccessState extends ProjectStates{}
+
+class ProjectSignOutErrorState extends ProjectStates{}

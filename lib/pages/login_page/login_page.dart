@@ -4,10 +4,12 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:sports_project/component/conest.dart';
 import 'package:sports_project/component/default_button.dart';
 import 'package:sports_project/component/default_text_field.dart';
+import 'package:sports_project/component/other_component.dart';
 import 'package:sports_project/component/shared/cache_helper.dart';
 import 'package:sports_project/layout/project_layout.dart';
 import 'package:sports_project/pages/login_page/cubit/cubit.dart';
 import 'package:sports_project/pages/login_page/cubit/states.dart';
+import 'package:sports_project/pages/login_page/forgot_password_screen.dart';
 import 'package:sports_project/pages/register_page/register_page.dart';
 
 class LoginPage extends StatelessWidget {
@@ -91,14 +93,19 @@ class LoginPage extends StatelessWidget {
                         style: TextStyle(color: Colors.black),
                         obscureText: LoginCubit.get(context).isPassword,
                         decoration: InputDecoration(
-                          border:OutlineInputBorder(
-                            borderSide: BorderSide(color:kPrimaryColor),
-                            borderRadius: BorderRadius.circular(20),),
+                          border: OutlineInputBorder(
+                            borderSide: BorderSide(color: kPrimaryColor),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
                           prefixIcon: Icon(
-                            Icons.key_outlined,color: kPrimaryColor,
+                            Icons.key_outlined,
+                            color: kPrimaryColor,
                           ),
                           suffixIcon: IconButton(
-                            icon: Icon(LoginCubit.get(context).suffix,color: Colors.grey,),
+                            icon: Icon(
+                              LoginCubit.get(context).suffix,
+                              color: Colors.grey,
+                            ),
                             onPressed: () {
                               LoginCubit.get(context)
                                   .changePasswordVisibility();
@@ -107,14 +114,34 @@ class LoginPage extends StatelessWidget {
                           hintText: 'Password',
                           hintStyle: TextStyle(color: Colors.grey),
                         ),
-                        validator: (value){
-                          if(value!.isEmpty) {
+                        validator: (value) {
+                          if (value!.isEmpty) {
                             return 'password must be not empty';
                           }
                         },
                       ),
                       SizedBox(
-                        height: 30,
+                        height: 10,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 15),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            GestureDetector(
+                              onTap: () {
+                                navigateTo(context, ForgotPasswordScreen());
+                              },
+                              child: Text(
+                                'Forgot Password?',
+                                style: TextStyle(color: kPrimaryColor),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(
+                        height: 20,
                       ),
                       DefaultButton(
                         label: 'Login',

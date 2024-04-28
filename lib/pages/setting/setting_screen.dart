@@ -1,17 +1,13 @@
 import 'dart:io';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sports_project/component/conest.dart';
+import 'package:sports_project/component/default_button.dart';
 import 'package:sports_project/component/other_component.dart';
 import 'package:sports_project/layout/cubit/cubit.dart';
 import 'package:sports_project/layout/cubit/states.dart';
-import 'package:video_player/video_player.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:sports_project/pages/login_page/login_page.dart';
 
 class SettingScreen extends StatelessWidget {
 
@@ -19,7 +15,12 @@ class SettingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<ProjectCubit, ProjectStates>(
-      listener: (context, state) {},
+      listener: (context, state) {
+          if(state is ProjectSignOutSuccessState){
+            Navigator.pushNamedAndRemoveUntil(
+                context, LoginPage.id, (route) => false);
+          }
+      },
       builder: (context, state) {
 
         var nameController = TextEditingController();
@@ -36,12 +37,6 @@ class SettingScreen extends StatelessWidget {
         ImageProvider<Object>? profileBackground = (profileImage != null
             ? FileImage(profileImage)
             : NetworkImage('${model!.image}')) as ImageProvider<Object>?;
-
-        // File? coverImage = ProjectCubit.get(context).coverImage;
-        // ImageProvider<Object>? coverBackground = (coverImage != null
-        //     ? FileImage(coverImage)
-        //     : NetworkImage('${model!.cover}')) as ImageProvider<Object>?;
-
 
         return Scaffold(
           appBar: AppBar(
@@ -77,37 +72,6 @@ class SettingScreen extends StatelessWidget {
                     child: Stack(
                       alignment: Alignment.bottomLeft,
                       children: [
-                        // Align(
-                        //   child: Stack(
-                        //     alignment: Alignment.bottomRight,
-                        //     children: [
-                        //       Container(
-                        //         width: double.infinity,
-                        //         height: 150,
-                        //         decoration: BoxDecoration(
-                        //           borderRadius: BorderRadius.only(
-                        //             topLeft: Radius.circular(4),
-                        //             topRight: Radius.circular(4),
-                        //           ),
-                        //           image: DecorationImage(
-                        //             image: coverBackground!,
-                        //             fit: BoxFit.cover,
-                        //           ),
-                        //         ),
-                        //       ),
-                        //       IconButton(
-                        //         onPressed: () {
-                        //           ProjectCubit.get(context).getCoverImage();
-                        //         },
-                        //         icon: Icon(
-                        //           Icons.camera_alt_outlined,
-                        //           color: Colors.white,
-                        //         ),
-                        //       ),
-                        //     ],
-                        //   ),
-                        //   alignment: Alignment.topCenter,
-                        // ),
                         Padding(
                           padding: const EdgeInsets.only(left: 12),
                           child: Stack(
@@ -167,36 +131,6 @@ class SettingScreen extends StatelessWidget {
                             ],
                           )),
 
-                        // SizedBox(width: 5,),
-                        // if(ProjectCubit.get(context).coverImage != null)
-                        //   Expanded(child:  Column(
-                        //     children: [
-                        //       Container(
-                        //         width: double.infinity,
-                        //         height: 40.0,
-                        //         child: MaterialButton(
-                        //           onPressed: (){
-                        //             ProjectCubit.get(context).uploadCoverImage(name: nameController.text, bio: bioController.text, phone: phoneController.text);
-                        //           },
-                        //           child: Text(
-                        //             'upload cover'.toUpperCase(),
-                        //             style: TextStyle(
-                        //               color: Colors.white,
-                        //             ),
-                        //           ),
-                        //         ),
-                        //         decoration: BoxDecoration(
-                        //           borderRadius: BorderRadius.circular(
-                        //             3,
-                        //           ),
-                        //           color: defaultColor,
-                        //         ),
-                        //       ),
-                        //       // SizedBox(height: 5 ,),
-                        //       // LinearProgressIndicator(),
-                        //     ],
-                        //   )),
-
 
                       ],
                     ),
@@ -242,6 +176,17 @@ class SettingScreen extends StatelessWidget {
                     label: 'Phone',
                     prefix: Icons.phone,
                   ),
+                  SizedBox(
+                    height: 40,
+                  ),
+                  DefaultButton(
+                      label: 'Log out',
+                    onTap: (){
+                        ProjectCubit.get(context).singOut();
+
+                    },
+                    buttonColor: kPrimaryColor,
+                  )
                 ],
               ),
             ),

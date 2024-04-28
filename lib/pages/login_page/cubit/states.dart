@@ -19,3 +19,10 @@ class LoginErrorState extends LoginStates{
 }
 
 class ChangePasswordVisibilityState extends LoginStates{}
+
+class ResetPasswordSuccessState extends LoginStates{}
+
+class ResetPasswordErrorState extends LoginStates{
+  final String error;
+  ResetPasswordErrorState(this.error);
+}

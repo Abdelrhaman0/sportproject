@@ -1,61 +1,133 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:conditional_builder_null_safety/conditional_builder_null_safety.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sports_project/component/other_component.dart';
-import 'package:sports_project/layout/cubit/cubit.dart';
-import 'package:sports_project/layout/cubit/states.dart';
 import 'package:sports_project/models/user_model.dart';
-import 'package:sports_project/pages/chats/chat_detail.dart';
+import 'package:sports_project/pages/user_profile_page/user_profile_screen.dart';
 
-class SearchScreen extends StatelessWidget {
+// class User {
+//   final String id;
+//   final String name;
+//   // Add other user properties as needed
+//
+//   User({required this.id, required this.name});
+// }
+
+class SearchScreen extends StatefulWidget {
+
   static String id = 'SearchScreen';
+  @override
+  _SearchScreenState createState() => _SearchScreenState();
+}
+
+class _SearchScreenState extends State<SearchScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  List<UserModel> _searchResults = [];
+  bool _loading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged() {
+    _debouncedSearch();
+  }
+
+  Future<void> _debouncedSearch() async {
+    setState(() => _loading = true);
+
+    // Debounce the search query
+    await Future.delayed(Duration(milliseconds: 500));
+
+    final String query = _searchController.text.trim();
+    if (query.isEmpty) {
+      setState(() {
+        _searchResults.clear();
+        _loading = false;
+      });
+      return;
+    }
+
+    try {
+      final QuerySnapshot<Map<String, dynamic>> users = await FirebaseFirestore.instance
+          .collection('users')
+          .where('name', isGreaterThanOrEqualTo: query)
+          .where('name', isLessThan: query + 'z')
+          .get();
+
+      setState(() {
+        _searchResults = users.docs.map((doc) => UserModel(uid: doc.id, name: doc['name'],bio: doc['bio'],image: doc['image'])).toList();
+        _loading = false;
+      });
+    } catch (e) {
+      print('Error searching users: $e');
+      setState(() {
+        _searchResults.clear();
+        _loading = false;
+      });
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<ProjectCubit,ProjectStates>(
-      listener: (context, state) {},
-      builder: (context, state) {
-        return ConditionalBuilder(
-          condition: ProjectCubit.get(context).users.length > 0,
-          builder: (BuildContext context) =>  ListView.separated(
-              physics: BouncingScrollPhysics(),
-              itemBuilder: (context, index) => chatItemBuilder(ProjectCubit.get(context).users[index],context),
-              separatorBuilder: (context, index) => myDivider(),
-              itemCount: ProjectCubit.get(context).users.length),
-          fallback: (BuildContext context) => Center(child: CircularProgressIndicator(),),
+    return Scaffold(
+      appBar: AppBar(
+        title: TextField(
+          controller: _searchController,
+          onChanged: (value) {
+            _debouncedSearch();
+          },
+          decoration: InputDecoration(
+            hintText: 'Search users...',
+            border: InputBorder.none,
+            suffixIcon: IconButton(
+              icon: Icon(Icons.clear),
+              onPressed: () {
+                _searchController.clear();
+                _debouncedSearch();
+              },
+            ),
+          ),
+        ),
+      ),
+      body: _buildSearchResults(),
+    );
+  }
 
+  Widget _buildSearchResults() {
+    if (_loading) {
+      return Center(
+        child: CircularProgressIndicator(),
+      );
+    } else if (_searchResults.isEmpty) {
+      return Center(
+        child: Text('No results found.'),
+      );
+    }
+
+    return ListView.builder(
+      itemCount: _searchResults.length,
+      itemBuilder: (context, index) {
+        final user = _searchResults[index];
+        return InkWell(
+          onTap: (){
+            navigateTo(context, UsersProfileScreen(model: user,));
+          },
+          child: ListTile(
+            title: Text('${user.name}'),
+            // You can add more UI elements or functionalities here
+          ),
         );
       },
     );
   }
-
-  Widget chatItemBuilder(UserModel model,context) => InkWell(
-    onTap: (){navigateTo(context, ChatDetailsScreen(userModel: model,));},
-    child: Padding(
-      padding: const EdgeInsets.all(15.0),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 30,
-            backgroundImage: NetworkImage(
-                '${model.image}'),
-          ),
-          SizedBox(
-            width: 15,
-          ),
-          Text(
-            '${model.name}',
-            style: TextStyle(
-              height: 1.4,
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
-
 }
 
