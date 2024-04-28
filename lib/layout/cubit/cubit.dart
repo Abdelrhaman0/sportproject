@@ -3,11 +3,14 @@ import 'dart:io';
 import 'package:bloc/bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:sports_project/component/conest.dart';
+import 'package:sports_project/component/shared/cache_helper.dart';
 import 'package:sports_project/layout/cubit/states.dart';
 import 'package:sports_project/models/comment_model.dart';
 import 'package:sports_project/models/message_model.dart';
@@ -18,8 +21,6 @@ import 'package:sports_project/pages/chats/chats_screen.dart';
 import 'package:sports_project/pages/home/home_screen.dart';
 import 'package:sports_project/pages/news/news_page.dart';
 import 'package:sports_project/pages/profile/profile_screen.dart';
-
-
 
 final storage = FirebaseStorage.instance;
 
@@ -34,8 +35,7 @@ class ProjectCubit extends Cubit<ProjectStates> {
     emit(ProjectGetUserLoadingState());
 
     FirebaseFirestore.instance.collection('users').doc(uid).get().then((value) {
-      userModel =
-          UserModel.formJson(value.data() as Map<String, dynamic>);
+      userModel = UserModel.formJson(value.data() as Map<String, dynamic>);
       emit(ProjectGetUserSuccessState());
     }).catchError((error) {
       print(error);
@@ -44,7 +44,6 @@ class ProjectCubit extends Cubit<ProjectStates> {
   }
 
   List<PostModel> postModel = [];
-
 
   int currentIndex = 0;
   List<Widget> screens = [
@@ -57,8 +56,10 @@ class ProjectCubit extends Cubit<ProjectStates> {
 
   List<String> title = ['Home', 'News', 'Posts', 'Chats', 'Profile'];
 
-  void changeBottomNav(int index) {
-
+  void changeBottomNav(int index ) {
+    if (index == 0 && postModel == null) {
+      getPost();
+    }
     if (index == 2) {
       emit(ProjectAddPostState());
     } else {
@@ -69,7 +70,6 @@ class ProjectCubit extends Cubit<ProjectStates> {
       getUsers();
     }
   }
-
 
   File? profileImage;
   var picker = ImagePicker();
@@ -144,7 +144,6 @@ class ProjectCubit extends Cubit<ProjectStates> {
     });
   }
 
-
   void updateUser(
       {required String name,
       required String bio,
@@ -169,7 +168,6 @@ class ProjectCubit extends Cubit<ProjectStates> {
       getUser();
     }).catchError((error) {});
   }
-
 
   List<CommentModel> commentModel = [];
 
@@ -217,14 +215,13 @@ class ProjectCubit extends Cubit<ProjectStates> {
     required String text,
     required String dateTime,
     String? postImage,
-
   }) {
     emit(ProjectCreatePostLoadingState());
     PostModel model = PostModel(
       name: userModel!.name,
       uid: userModel!.uid,
       image: userModel!.image,
-      postId:'' ,
+      postId: '',
       text: text,
       dateTime: dateTime,
       postImage: postImage ?? '',
@@ -233,10 +230,11 @@ class ProjectCubit extends Cubit<ProjectStates> {
         .collection('posts')
         .add(model.toMap())
         .then((value) {
-          model.postId = value.id;
-          print(' model id ${model.toMap()}');
+      model.postId = value.id;
+      print('Created post with ID: ${model.postId}');
       emit(ProjectCreatePostSuccessState());
     }).catchError((error) {
+      print('Failed to create post: $error');
       emit(ProjectCreatePostErrorState());
     });
   }
@@ -266,39 +264,49 @@ class ProjectCubit extends Cubit<ProjectStates> {
 
   void getComment(String postId) {
     emit(ProjectGetCommentLoadingState());
+
     FirebaseFirestore.instance
         .collection('posts')
         .doc(postId)
         .collection('comments')
-        .get()
-        .then((value) {
-      for (var element in value.docs) {
-        element.reference.collection('commentsLikes').get().then((value) {
-          commentsLikes.add(value.docs.length);
-          commentModel.add(CommentModel.fromJson(element.data()));
-          commentsId.add(element.id);
-        }).catchError((error) {});
-      }
-      emit(ProjectGetCommentSuccessState());
-    }).catchError((error) {
-      emit(ProjectGetCommentErrorState(error));
-    });
+        .orderBy('dateTime', descending: true) // Adjusted to order by dateTime in descending order
+        .snapshots()
+        .listen(
+          (event) {
+        if (event.docs.isNotEmpty) {
+          commentModel = event.docs
+              .map((doc) => CommentModel.fromJson(doc.data()))
+              .toList();
+          emit(ProjectGetCommentSuccessState());
+        } else {
+          emit(ProjectGetCommentEmptyState());
+        }
+      },
+      onError: (error) {
+        emit(ProjectGetCommentErrorState(error.toString()));
+      },
+    );
   }
+
 
   void createComment({
     required String text,
     required String dateTime,
     required String postId,
   }) {
+    if (postId.isEmpty) {
+      print('post id is empty');
+    } else
+      print(postId);
+
     emit(ProjectCreateCommentLoadingState());
     CommentModel model = CommentModel(
-      name: userModel!.name,
-      uid: userModel!.uid,
-      profilePhoto: userModel!.image,
-      comment: text,
-      datePublished: dateTime,
-      postId: postId
-    );
+        name: userModel!.name,
+        uid: userModel!.uid,
+        profilePhoto: userModel!.image,
+        comment: text,
+        datePublished: dateTime,
+        postId: postId);
     FirebaseFirestore.instance
         .collection('posts')
         .doc(postId)
@@ -308,21 +316,6 @@ class ProjectCubit extends Cubit<ProjectStates> {
       emit(ProjectCreateCommentSuccessState());
     }).catchError((error) {
       emit(ProjectCreateCommentErrorState());
-    });
-  }
-
-  void getCommentsLikes(String commentId, String postId) {
-    FirebaseFirestore.instance
-        .collection('posts')
-        .doc(postId)
-        .collection('comments')
-        .doc(commentId)
-        .collection('commentsLikes')
-        .doc(userModel!.uid)
-        .set({'commentsLike': true}).then((value) {
-      emit(ProjectGetLikesSuccessState());
-    }).catchError((error) {
-      emit(ProjectGetLikesErrorState(error));
     });
   }
 
@@ -346,16 +339,19 @@ class ProjectCubit extends Cubit<ProjectStates> {
       emit(ProjectGetAllUserLoadingState());
       FirebaseFirestore.instance.collection('users').get().then((value) {
         for (var element in value.docs) {
-          if (element.data()['uid'] != userModel!.uid) {
-            users.add(UserModel.formJson(element.data()));
+          var userData = element.data();
+          if (userData != null && userData['uid'] != userModel!.uid) {
+            users.add(UserModel.formJson(userData));
           }
         }
         emit(ProjectGetAllUserSuccessState());
       }).catchError((error) {
         emit(ProjectGetAllUserErrorState(error.toString()));
+        print(error);
       });
     }
   }
+
 
   void sendMassage(
       {required String? text,
@@ -419,4 +415,44 @@ class ProjectCubit extends Cubit<ProjectStates> {
     });
   }
 
+  void singOut() async {
+    emit(ProjectSignOutLoadingState());
+   await FirebaseAuth.instance.signOut();
+    uid = CacheHelper.removeData(key: 'uid').then((value) =>{
+      emit(ProjectSignOutSuccessState())
+    }).catchError((error) => {
+      emit(ProjectSignOutErrorState()),
+      print(error)
+    }) as String?;
+  }
+
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  Future<void> followUser(String uid, String followId) async {
+    try {
+      DocumentSnapshot snap =
+      await _firestore.collection('users').doc(uid).get();
+      List following = (snap.data()! as dynamic)['following'];
+
+      if (following.contains(followId)) {
+        await _firestore.collection('users').doc(followId).update({
+          'followers': FieldValue.arrayRemove([uid])
+        });
+
+        await _firestore.collection('users').doc(uid).update({
+          'following': FieldValue.arrayRemove([followId])
+        });
+      } else {
+        await _firestore.collection('users').doc(followId).update({
+          'followers': FieldValue.arrayUnion([uid])
+        });
+
+        await _firestore.collection('users').doc(uid).update({
+          'following': FieldValue.arrayUnion([followId])
+        });
+      }
+    } catch (e) {
+      if (kDebugMode) print(e.toString());
+    }
+  }
 }
