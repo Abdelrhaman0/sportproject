@@ -1,4 +1,6 @@
 
+import 'package:sports_project/models/comment_model.dart';
+
 abstract class ProjectStates {}
 
 class ProjectInitialState extends ProjectStates{}
@@ -115,3 +117,23 @@ class ProjectSignOutLoadingState extends ProjectStates{}
 class ProjectSignOutSuccessState extends ProjectStates{}
 
 class ProjectSignOutErrorState extends ProjectStates{}
+
+class ProjectPostVideoPickedSuccessState extends ProjectStates{}
+
+class ProjectPostVideoPickedErrorState extends ProjectStates{}
+
+class ProjectPostVideoRemovedState extends ProjectStates{}
+
+class ProjectVideoInitializedState extends ProjectStates{
+  final String postId;
+
+  ProjectVideoInitializedState(this.postId);
+}
+
+class ProjectVideoPlayPauseState extends ProjectStates{}
+
+class ProjectCommentsLoaded extends ProjectStates {
+  final List<CommentModel> comments;
+
+  ProjectCommentsLoaded(this.comments);
+}

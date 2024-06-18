@@ -15,6 +15,7 @@ class UsersProfileScreen extends StatelessWidget {
   UsersProfileScreen({required this.model});
 
   final UserModel model;
+  int postNumber = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -22,174 +23,174 @@ class UsersProfileScreen extends StatelessWidget {
       listener: (context, state) {},
       builder: (context, state) {
         return Scaffold(
-            appBar: AppBar(
-              title: Text('${model.name}'),
-            ),
-            body: ConditionalBuilder(
-              condition: model.image != null,
-              builder: (context) => Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(left: 12),
+          appBar: AppBar(
+            title: Text('${model.name}'),
+          ),
+          body: ConditionalBuilder(
+            condition: model.image != null,
+            builder: (context) => Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(left: 12),
+                          child: CircleAvatar(
+                            radius: 54,
+                            backgroundColor:
+                            Theme.of(context).scaffoldBackgroundColor,
                             child: CircleAvatar(
-                              radius: 54,
-                              backgroundColor:
-                              Theme.of(context).scaffoldBackgroundColor,
-                              child: CircleAvatar(
-                                radius: 50,
-                                backgroundImage: NetworkImage(
-                                  model!.image ??
-                                      'https://icons8.com/icon/AZazdsitsrgg/user',
+                              radius: 50,
+                              backgroundImage: NetworkImage(
+                                model.image ??
+                                    'https://icons8.com/icon/AZazdsitsrgg/user',
+                              ),
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: InkWell(
+                            child: Column(
+                              children: [
+                                Text(
+                                  'Posts',
+                                  style: Theme.of(context).textTheme.subtitle1,
                                 ),
-                              ),
+                                Text(
+                                  '$postNumber',
+                                  style: Theme.of(context).textTheme.caption,
+                                ),
+                              ],
                             ),
+                            onTap: () {},
                           ),
-                          Expanded(
-                            child: InkWell(
-                              child: Column(
-                                children: [
-                                  Text(
-                                    'Posts',
-                                    style:
-                                    Theme.of(context).textTheme.subtitle1,
-                                  ),
-                                  Text(
-                                    '100',
-                                    style: Theme.of(context).textTheme.caption,
-                                  ),
-                                ],
-                              ),
-                              onTap: () {},
-                            ),
-                          ),
-                          Expanded(
-                            child: InkWell(
-                              child: Column(
-                                children: [
-                                  Text(
-                                    'Followers',
-                                    style:
-                                    Theme.of(context).textTheme.subtitle1,
-                                  ),
-                                  Text(
-                                    '1M',
-                                    style: Theme.of(context).textTheme.caption,
-                                  ),
-                                ],
-                              ),
-                              onTap: () {},
-                            ),
-                          ),
-                          Expanded(
-                            child: InkWell(
-                              child: Column(
-                                children: [
-                                  Text(
-                                    'Following',
-                                    style:
-                                    Theme.of(context).textTheme.subtitle1,
-                                  ),
-                                  Text(
-                                    '35',
-                                    style: Theme.of(context).textTheme.caption,
-                                  ),
-                                ],
-                              ),
-                              onTap: () {},
-                            ),
-                          )
-                        ],
-                      ),
-                      SizedBox(
-                        height: 5,
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 20),
-                        child: Row(
-                          children: [
-                            Text(
-                              '${model!.name}',
-                              style: Theme.of(context).textTheme.bodyText1,
-                            ),
-                          ],
                         ),
-                      ),
-                      SizedBox(
-                        height: 10,
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 20),
-                        child: Text(
-                          '${model!.bio}',
-                          style: Theme.of(context).textTheme.caption,
+                        Expanded(
+                          child: InkWell(
+                            child: Column(
+                              children: [
+                                Text(
+                                  'Followers',
+                                  style: Theme.of(context).textTheme.subtitle1,
+                                ),
+                                Text(
+                                  '1M',
+                                  style: Theme.of(context).textTheme.caption,
+                                ),
+                              ],
+                            ),
+                            onTap: () {},
+                          ),
                         ),
-                      ),
-                      SizedBox(
-                        height: 50,
-                      ),
-                      Row(
+                        Expanded(
+                          child: InkWell(
+                            child: Column(
+                              children: [
+                                Text(
+                                  'Following',
+                                  style: Theme.of(context).textTheme.subtitle1,
+                                ),
+                                Text(
+                                  '35',
+                                  style: Theme.of(context).textTheme.caption,
+                                ),
+                              ],
+                            ),
+                            onTap: () {},
+                          ),
+                        )
+                      ],
+                    ),
+                    SizedBox(
+                      height: 5,
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 20),
+                      child: Row(
                         children: [
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: () {},
-                              style: ButtonStyle(
-                                backgroundColor: MaterialStateProperty.all(
-                                    kPrimaryColor), // Text color
-                              ),
-                              child: Text(
-                                'follow',
-                                style: TextStyle(color: Colors.white),
-                              ),
-                            ),
+                          Text(
+                            '${model.name}',
+                            style: Theme.of(context).textTheme.bodyText1,
                           ),
-                          SizedBox(
-                            width: 10,
-                          ),
-                          OutlinedButton(
-                              onPressed: () {
-                                navigateTo(context, ChatDetailsScreen(userModel: model,));
-                              }, child: Text('Message'))
                         ],
                       ),
-                      SizedBox(
-                        height: 10,
+                    ),
+                    SizedBox(
+                      height: 10,
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 20),
+                      child: Text(
+                        '${model.bio}',
+                        style: Theme.of(context).textTheme.caption,
                       ),
-                      myDivider(),
-                      SizedBox(
-                        height: 20,
-                      ),
-                      buildPostList(context, '${model.uid}'),
-
-                    ],
-                  ),
+                    ),
+                    SizedBox(
+                      height: 50,
+                    ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () {},
+                            style: ButtonStyle(
+                              backgroundColor: MaterialStateProperty.all(
+                                  kPrimaryColor), // Text color
+                            ),
+                            child: Text(
+                              'Follow',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          width: 10,
+                        ),
+                        OutlinedButton(
+                            onPressed: () {
+                              navigateTo(context, ChatDetailsScreen(userModel: model));
+                            },
+                            child: Text('Message'))
+                      ],
+                    ),
+                    SizedBox(
+                      height: 10,
+                    ),
+                    myDivider(),
+                    SizedBox(
+                      height: 20,
+                    ),
+                    buildPostList(context, '${model.uid}'),
+                  ],
                 ),
               ),
-              fallback: (context) => Center(
-                child: CircularProgressIndicator(),
-              ),
-            ));
+            ),
+            fallback: (context) => Center(
+              child: CircularProgressIndicator(),
+            ),
+          ),
+        );
       },
     );
   }
 
   Widget buildPostList(BuildContext context, String userId) {
+    final userPosts = ProjectCubit.get(context).postModel;
+    postNumber = userPosts.where((post) => post.uid == userId).length;
+
     return ListView.separated(
       shrinkWrap: true,
       physics: NeverScrollableScrollPhysics(),
-      itemBuilder: (context, index) => buildPostItem(
-          context,
-          ProjectCubit.get(context).postModel[index],
-          index,
-          ProjectCubit.get(context).postId![index],
-          userId),
+      itemBuilder: (context, index) {
+        final post = userPosts[index];
+        final postId = ProjectCubit.get(context).postId![index];
+        return buildPostItem(context, post, index, postId, userId);
+      },
       separatorBuilder: (context, index) => SizedBox(height: 10),
-      itemCount: ProjectCubit.get(context).postModel.length,
+      itemCount: userPosts.length,
     );
   }
 
@@ -294,8 +295,8 @@ class UsersProfileScreen extends StatelessWidget {
                     Expanded(
                       child: InkWell(
                         onTap: () {
-                          ProjectCubit.get(context).getLikes(
-                              ProjectCubit.get(context).postId[index]);
+                          ProjectCubit.get(context)
+                              .getLikes(ProjectCubit.get(context).postId[index]);
                         },
                         child: Padding(
                           padding: const EdgeInsets.symmetric(vertical: 5),
@@ -333,7 +334,7 @@ class UsersProfileScreen extends StatelessWidget {
         ),
       );
     } else {
-      return SizedBox.shrink();
+      return SizedBox(width: 0);
     }
   }
 }

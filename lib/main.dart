@@ -54,7 +54,8 @@ class SportsProject extends StatelessWidget {
       create: (context) => ProjectCubit()
         ..getUser()
         ..getPost()
-        ..getUsers(),
+        ..getUsers()
+      ..getUserPost(uid!),
       child: BlocConsumer<ProjectCubit, ProjectStates>(
         listener: (context, state) {},
         builder: (context, state) {
