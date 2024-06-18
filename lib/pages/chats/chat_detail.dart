@@ -68,7 +68,7 @@ class ChatDetailsScreen extends StatelessWidget {
                                   height: 10,
                                 ),
                             itemCount:
-                                ProjectCubit.get(context).massages.length),
+                              ProjectCubit.get(context).massages.length),
                       ),
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 10),

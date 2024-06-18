@@ -21,6 +21,7 @@ import 'package:sports_project/pages/chats/chats_screen.dart';
 import 'package:sports_project/pages/home/home_screen.dart';
 import 'package:sports_project/pages/news/news_page.dart';
 import 'package:sports_project/pages/profile/profile_screen.dart';
+import 'package:video_player/video_player.dart';
 
 final storage = FirebaseStorage.instance;
 
@@ -44,8 +45,10 @@ class ProjectCubit extends Cubit<ProjectStates> {
   }
 
   List<PostModel> postModel = [];
+  List<PostModel> userPostModel = [];
 
   int currentIndex = 0;
+
   List<Widget> screens = [
     HomeScreen(),
     NewsScreen(),
@@ -56,7 +59,7 @@ class ProjectCubit extends Cubit<ProjectStates> {
 
   List<String> title = ['Home', 'News', 'Posts', 'Chats', 'Profile'];
 
-  void changeBottomNav(int index ) {
+  void changeBottomNav(int index) {
     if (index == 0 && postModel == null) {
       getPost();
     }
@@ -72,6 +75,7 @@ class ProjectCubit extends Cubit<ProjectStates> {
   }
 
   File? profileImage;
+
   var picker = ImagePicker();
 
   Future<void> getProfileImage() async {
@@ -121,29 +125,6 @@ class ProjectCubit extends Cubit<ProjectStates> {
     });
   }
 
-  void uploadCoverImage({
-    required String name,
-    required String bio,
-    required String phone,
-  }) {
-    storage
-        .ref()
-        .child('users/${Uri.file(coverImage!.path).pathSegments.last}')
-        .putFile(coverImage!)
-        .then((value) {
-      value.ref.getDownloadURL().then((value) {
-        print(value);
-        updateUser(name: name, bio: bio, phone: phone, cover: value);
-        emit(ProjectUploadCoverImageSuccessState());
-      }).catchError((error) {
-        emit(ProjectUploadCoverImageErrorState());
-      });
-    }).catchError((error) {
-      emit(ProjectUploadCoverImageErrorState());
-      print(error);
-    });
-  }
-
   void updateUser(
       {required String name,
       required String bio,
@@ -172,6 +153,7 @@ class ProjectCubit extends Cubit<ProjectStates> {
   List<CommentModel> commentModel = [];
 
   File? postImage;
+  File? postVideo;
 
   void removePostImage() {
     postImage = null;
@@ -215,8 +197,10 @@ class ProjectCubit extends Cubit<ProjectStates> {
     required String text,
     required String dateTime,
     String? postImage,
+    String? postVideo,
   }) {
     emit(ProjectCreatePostLoadingState());
+
     PostModel model = PostModel(
       name: userModel!.name,
       uid: userModel!.uid,
@@ -225,7 +209,9 @@ class ProjectCubit extends Cubit<ProjectStates> {
       text: text,
       dateTime: dateTime,
       postImage: postImage ?? '',
+      postVideo: postVideo ?? '',
     );
+
     FirebaseFirestore.instance
         .collection('posts')
         .add(model.toMap())
@@ -239,10 +225,97 @@ class ProjectCubit extends Cubit<ProjectStates> {
     });
   }
 
+
+  VideoPlayerController? postVideoController;
+
+
+  Future<void> getPostVideo() async {
+    final pickedFile = await ImagePicker().pickVideo(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      postVideo = File(pickedFile.path);
+      postVideoController = VideoPlayerController.file(postVideo!)
+        ..initialize().then((_) {
+          emit(ProjectPostVideoPickedSuccessState());
+        });
+    } else {
+      emit(ProjectPostVideoPickedErrorState());
+    }
+  }
+
+  Future<void> removePostVideo() async {
+    postVideo = null;
+    emit(ProjectPostVideoRemovedState());
+  }
+
+  Future<void> uploadPostVideo({required String text, required String dateTime}) async {
+    emit(ProjectCreatePostLoadingState());
+    final videoUploadResult = await FirebaseStorage.instance
+        .ref()
+        .child('posts/${Uri.file(postVideo!.path).pathSegments.last}')
+        .putFile(postVideo!);
+
+    final videoUrl = await videoUploadResult.ref.getDownloadURL();
+    createPost(text: text, dateTime: dateTime, postVideo: videoUrl);
+  }
+
+  Map<String, VideoPlayerController?> postVideoControllers = {};
+
+  VideoPlayerController? controller;
+
+  void initializeVideoController(String postId, String videoUrl) {
+    if (postVideoControllers[postId] == null) {
+      print('Initializing video controller for postId: $postId with videoUrl: $videoUrl');
+       controller = VideoPlayerController.network(videoUrl)
+        ..initialize().then((_) {
+          postVideoControllers[postId] = controller;
+          emit(ProjectVideoInitializedState(postId));
+          print('Video controller initialized for postId: $postId');
+        }).catchError((error) {
+          print('Error initializing video controller for postId: $postId, error: $error');
+        });
+    } else {
+      print('Video controller already exists for postId: $postId');
+    }
+  }
+
+
+
+  void playPauseVideo(String postId) {
+    final controller = postVideoControllers[postId];
+    if (controller != null) {
+      if (controller.value.isPlaying) {
+        controller.pause();
+      } else {
+        controller.play();
+      }
+      emit(ProjectVideoPlayPauseState());
+    } else {
+      print('No video controller found for postId: $postId');
+    }
+  }
+
+  void disposeVideoController(String postId) {
+    postVideoControllers[postId]?.dispose();
+    postVideoControllers.remove(postId);
+    print('Disposed video controller for postId: $postId');
+  }
+
+  @override
+  Future<void> close() {
+    postVideoControllers.forEach((key, controller) {
+      controller?.dispose();
+    });
+    postVideoControllers.clear();
+    return super.close();
+  }
+
   List<String> postId = [];
   List<int> likes = [];
   List<String> commentsId = [];
   List<int> commentsLikes = [];
+  List<int> userLikes = [];
+  List<String> userPostId = [];
+
 
   void getPost() {
     emit(ProjectGetPostLoadingState());
@@ -253,7 +326,7 @@ class ProjectCubit extends Cubit<ProjectStates> {
           likes.add(value.docs.length);
           postModel.add(PostModel.formJson(element.data()));
           postId.add(element.id);
-        }).catchError((error) {});
+        });
       }
       emit(ProjectGetPostSuccessState());
     }).catchError((error) {
@@ -262,31 +335,49 @@ class ProjectCubit extends Cubit<ProjectStates> {
     });
   }
 
-  void getComment(String postId) {
+  void getUserPost(String userId) {
+
+    FirebaseFirestore.instance.collection('posts').where('uid', isEqualTo: userId).get().then((value) {
+      for (var element in value.docs) {
+        element.reference.collection('likes').get().then((value) {
+          userLikes.add(value.docs.length);
+          userPostModel.add(PostModel.formJson(element.data()));
+          userPostId.add(element.id);
+        });
+      }
+    }).catchError((error) {
+      print(error);
+    });
+  }
+
+
+  void getComment(String postId) async {
     emit(ProjectGetCommentLoadingState());
 
-    FirebaseFirestore.instance
-        .collection('posts')
-        .doc(postId)
-        .collection('comments')
-        .orderBy('dateTime', descending: true) // Adjusted to order by dateTime in descending order
-        .snapshots()
-        .listen(
-          (event) {
-        if (event.docs.isNotEmpty) {
-          commentModel = event.docs
-              .map((doc) => CommentModel.fromJson(doc.data()))
-              .toList();
-          emit(ProjectGetCommentSuccessState());
-        } else {
-          emit(ProjectGetCommentEmptyState());
-        }
-      },
-      onError: (error) {
-        emit(ProjectGetCommentErrorState(error.toString()));
-      },
-    );
+    try {
+      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+          .collection('posts')
+          .doc(postId)
+          .collection('comments')
+          .orderBy('datePublished', descending: true)
+          .get();
+
+      commentModel = querySnapshot.docs.map((doc) {
+        return CommentModel(
+          comment: doc['comment'],
+          profilePhoto: doc['profilePhoto'],
+          name: doc['name'],
+          datePublished: doc['datePublished'],
+        );
+      }).toList();
+
+      emit(ProjectCommentsLoaded(commentModel));
+    } catch (error) {
+      print(error.toString());
+      emit(ProjectGetCommentErrorState(error.toString()));
+    }
   }
+
 
 
   void createComment({
@@ -352,7 +443,6 @@ class ProjectCubit extends Cubit<ProjectStates> {
     }
   }
 
-
   void sendMassage(
       {required String? text,
       required String? receiverId,
@@ -417,13 +507,12 @@ class ProjectCubit extends Cubit<ProjectStates> {
 
   void singOut() async {
     emit(ProjectSignOutLoadingState());
-   await FirebaseAuth.instance.signOut();
-    uid = CacheHelper.removeData(key: 'uid').then((value) =>{
-      emit(ProjectSignOutSuccessState())
-    }).catchError((error) => {
-      emit(ProjectSignOutErrorState()),
-      print(error)
-    }) as String?;
+    await FirebaseAuth.instance.signOut();
+    uid = CacheHelper.removeData(key: 'uid')
+            .then((value) => {emit(ProjectSignOutSuccessState())})
+            .catchError(
+                (error) => {emit(ProjectSignOutErrorState()), print(error)})
+        as String?;
   }
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -431,7 +520,7 @@ class ProjectCubit extends Cubit<ProjectStates> {
   Future<void> followUser(String uid, String followId) async {
     try {
       DocumentSnapshot snap =
-      await _firestore.collection('users').doc(uid).get();
+          await _firestore.collection('users').doc(uid).get();
       List following = (snap.data()! as dynamic)['following'];
 
       if (following.contains(followId)) {

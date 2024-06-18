@@ -7,6 +7,7 @@ import 'package:sports_project/layout/cubit/cubit.dart';
 import 'package:sports_project/layout/cubit/states.dart';
 import 'package:sports_project/models/post_model.dart';
 import 'package:sports_project/pages/comments/comments_screen.dart';
+import 'package:video_player/video_player.dart';
 
 class HomeScreen extends StatelessWidget {
   @override
@@ -14,18 +15,18 @@ class HomeScreen extends StatelessWidget {
     return BlocConsumer<ProjectCubit, ProjectStates>(
       listener: (context, state) {},
       builder: (context, state) {
-        var post = ProjectCubit.get(context).postModel;
+        var postModel = ProjectCubit.get(context).postModel;
         return ConditionalBuilder(
-          condition: ProjectCubit.get(context).postModel.isNotEmpty &&
-              ProjectCubit.get(context).userModel != null,
-          builder: (context) => SingleChildScrollView(
+          condition: postModel.isNotEmpty && ProjectCubit.get(context).userModel != null,
+          builder: (context) => ListView.separated(
             physics: BouncingScrollPhysics(),
-            child: Column(
-              children: [
-                buildPostList(context),
-                SizedBox(height: 10),
-              ],
-            ),
+            itemBuilder: (context, index) {
+              final post = ProjectCubit.get(context).postModel[index];
+              final postId = ProjectCubit.get(context).postId![index];
+              return buildPostItem(context, post, index, postId);
+            },
+            separatorBuilder: (context, index) => SizedBox(height: 10),
+            itemCount: postModel.length,
           ),
           fallback: (context) => Center(child: CircularProgressIndicator()),
         );
@@ -33,25 +34,31 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget buildPostList(BuildContext context) {
-    return ListView.separated(
-      shrinkWrap: true,
-      physics: NeverScrollableScrollPhysics(),
-      itemBuilder: (context, index) =>
-          buildPostItem(context, ProjectCubit.get(context).postModel[index],index,ProjectCubit.get(context).postId![index]),
-      separatorBuilder: (context, index) => SizedBox(height: 10),
-      itemCount: ProjectCubit.get(context).postModel.length,
-    );
-  }
-
   Widget buildPostItem(BuildContext context, PostModel model, int index, String postId) {
-    return Card(
+    if (model.postVideo != null && model.postVideo!.isNotEmpty) {
+      ProjectCubit.get(context).initializeVideoController(postId, model.postVideo!);
+    }
+
+    return AnimatedContainer(
+      duration: Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
       clipBehavior: Clip.antiAliasWithSaveLayer,
-      elevation: 6,
-      margin: EdgeInsets.symmetric(horizontal: 8.0),
+      margin: EdgeInsets.symmetric(horizontal: 8.0, vertical: 5.0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8.0),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black26,
+            blurRadius: 6,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(10.0),
+        padding: const EdgeInsets.all(15.0),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
@@ -66,50 +73,88 @@ class HomeScreen extends StatelessWidget {
                     children: [
                       Text(
                         '${model.name}',
-                        style: TextStyle(height: 1.4),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
                       Text(
                         '${model.dateTime}',
-                        style: Theme.of(context).textTheme.caption!.copyWith(height: 1.4),
+                        style: Theme.of(context).textTheme.caption,
                       ),
                     ],
                   ),
                 ),
-                SizedBox(width: 15),
               ],
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 15),
-              child: Container(
-                width: double.infinity,
-                height: 1,
-                color: Colors.grey[300],
-              ),
-            ),
-            Row(
-              children: [
-                Text(
-                  '${model.text}',
-                  style: Theme.of(context).textTheme.subtitle1,
-                ),
-              ],
+            SizedBox(height: 10),
+            Text(
+              '${model.text}',
+              style: Theme.of(context).textTheme.subtitle1,
             ),
             if (model.postImage != '')
               Padding(
-                padding: const EdgeInsetsDirectional.only(top: 15),
-                child: Image.network(
-                  '${model.postImage}',
-                  width: double.infinity,
-                  height: 140,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    print('Failed to load image: $error\n$stackTrace');
-                    return SizedBox.shrink();
-                  },
+                padding: const EdgeInsets.symmetric(vertical: 15),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8.0),
+                  child: Image.network(
+                    '${model.postImage}',
+                    width: double.infinity,
+                    height: 200,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      print('Failed to load image: $error\n$stackTrace');
+                      return SizedBox.shrink();
+                    },
+                  ),
                 ),
               ),
+            if (model.postVideo != null && model.postVideo!.isNotEmpty)
+              BlocBuilder<ProjectCubit, ProjectStates>(
+                builder: (context, state) {
+                  var controller = ProjectCubit.get(context).postVideoControllers[postId];
+                  if (controller == null || !controller.value.isInitialized) {
+                    return Center(child: CircularProgressIndicator());
+                  }
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8.0),
+                      child: AspectRatio(
+                        aspectRatio: controller.value.aspectRatio,
+                        child: Stack(
+                          alignment: Alignment.bottomCenter,
+                          children: [
+                            FadeTransition(
+                              opacity: AlwaysStoppedAnimation(controller.value.isPlaying ? 1.0 : 0.7),
+                              child: VideoPlayer(controller),
+                            ),
+                            VideoProgressIndicator(
+                              controller,
+                              allowScrubbing: true,
+                            ),
+                            IconButton(
+                              onPressed: () {
+                                ProjectCubit.get(context).playPauseVideo(postId);
+                              },
+                              icon: AnimatedSwitcher(
+                                duration: Duration(milliseconds: 300),
+                                child: Icon(
+                                  controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
+                                  key: ValueKey<bool>(controller.value.isPlaying),
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 5),
+              padding: const EdgeInsets.symmetric(vertical: 10),
               child: Row(
                 children: [
                   Expanded(
@@ -117,7 +162,6 @@ class HomeScreen extends StatelessWidget {
                       onTap: () {
                         ProjectCubit.get(context).getComment(postId);
                         navigateTo(context, CommentsScreen(postId: postId));
-                        print(postId);
                       },
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 5),
@@ -130,7 +174,7 @@ class HomeScreen extends StatelessWidget {
                             ),
                             SizedBox(width: 5),
                             Text(
-                              '0',
+                              'Comment',
                               style: TextStyle(color: Colors.grey),
                             ),
                           ],
@@ -166,18 +210,10 @@ class HomeScreen extends StatelessWidget {
                 ],
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: Container(
-                width: double.infinity,
-                height: 1,
-                color: Colors.grey[300],
-              ),
-            ),
+            Divider(color: Colors.grey[300]),
           ],
         ),
       ),
     );
   }
 }
-

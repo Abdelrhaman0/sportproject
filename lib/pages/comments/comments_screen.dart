@@ -10,13 +10,10 @@ class CommentsScreen extends StatelessWidget {
 
   CommentsScreen({required this.postId});
 
-
-
   @override
   Widget build(BuildContext context) {
     // Load comments
     ProjectCubit.get(context).getComment(postId);
-
 
     return Scaffold(
       appBar: AppBar(
@@ -28,49 +25,58 @@ class CommentsScreen extends StatelessWidget {
           },
         ),
       ),
-      body: BlocBuilder<ProjectCubit, ProjectStates>(
+      body: BlocConsumer<ProjectCubit, ProjectStates>(
+        listener: (context, state) {
+          if (state is ProjectCreateCommentSuccessState) {
+            // Fetch comments again
+            ProjectCubit.get(context).getComment(postId);
+          }
+        },
         builder: (context, state) {
-          return Column(
-            children: [
-              Expanded(
-                child: _buildCommentsList(context),
-              ),
-              _buildCommentInput(context),
-            ],
-          );
+          if (state is ProjectGetCommentLoadingState) {
+            return Center(child: CircularProgressIndicator());
+          } else if (state is ProjectCommentsLoaded) {
+            return _buildCommentListWithRefresh(context, state.comments, postId);
+          } else if (state is ProjectGetCommentErrorState) {
+            return Center(child: Text(state.error));
+          } else {
+            return Center(child: CircularProgressIndicator());
+          }
         },
       ),
     );
   }
 
-  Widget _buildCommentsList(BuildContext context) {
-    final commentModel = ProjectCubit.get(context).commentModel;
-
-    return commentModel.isNotEmpty
-        ? ListView.builder(
-      itemCount: commentModel.length,
-      itemBuilder: (context, index) {
-        return _buildCommentItem(context, commentModel[index]);
+  Widget _buildCommentListWithRefresh(BuildContext context, List<CommentModel> comments, String postId) {
+    return RefreshIndicator(
+      onRefresh: () async {
+        // Fetch comments again
+        ProjectCubit.get(context).getComment(postId);
       },
-    )
-        : Center(
-      child: Text('No comments yet'),
+      child: ListView.builder(
+        itemCount: comments.length,
+        itemBuilder: (context, index) {
+          return _buildCommentItem(context, comments[index], index);
+        },
+      ),
     );
   }
 
-  Widget _buildCommentItem(BuildContext context, CommentModel model) {
-    return Container(
-      padding: EdgeInsets.all(10),
-      margin: EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+  Widget _buildCommentItem(BuildContext context, CommentModel model, int index) {
+    return AnimatedContainer(
+      duration: Duration(milliseconds: 500),
+      curve: Curves.easeInOut,
+      padding: EdgeInsets.all(15),
+      margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
+        color: Colors.grey[300],
+        borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.5),
-            spreadRadius: 1,
-            blurRadius: 3,
-            offset: Offset(0, 2),
+            color: Colors.grey.withOpacity(0.3),
+            spreadRadius: 2,
+            blurRadius: 5,
+            offset: Offset(0, 3),
           ),
         ],
       ),
@@ -78,83 +84,49 @@ class CommentsScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               CircleAvatar(
                 radius: 20,
                 backgroundImage: NetworkImage(model.profilePhoto ?? ''),
               ),
               SizedBox(width: 10),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    model.name ?? '',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      model.name ?? '',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
-                  ),
-                  Text(
-                    model.datePublished ?? '',
-                    style: TextStyle(
-                      color: Colors.grey,
+                    SizedBox(height: 5),
+                    Text(
+                      model.datePublished ?? '',
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontSize: 12,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          SizedBox(height: 10),
-          Text(
-            model.comment ?? '',
-            style: TextStyle(
-              fontSize: 16,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCommentInput(BuildContext context) {
-    final TextEditingController commentController = TextEditingController();
-    var now = DateTime.now();
-    var formatter = DateFormat('MMM dd, yyyy hh:mm a');
-    var formattedDate = formatter.format(now);
-
-    return Padding(
-      padding: EdgeInsets.all(10),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: commentController,
-              decoration: InputDecoration(
-                hintText: 'Write a comment...',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(30),
+                    SizedBox(height: 10),
+                    Text(
+                      model.comment ?? '',
+                      style: TextStyle(
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
-          ),
-          SizedBox(width: 10),
-          ElevatedButton(
-            onPressed: () {
-              final comment = commentController.text.trim();
-              if (comment.isNotEmpty) {
-                ProjectCubit.get(context).createComment(
-                  text: comment,
-                  postId: postId, dateTime:formattedDate,
-                );
-                commentController.clear();
-              }
-            },
-            child: Text('Post'),
-            style: ElevatedButton.styleFrom(
-              primary: Theme.of(context).primaryColor,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
+              IconButton(
+                icon: Icon(Icons.favorite_border_outlined),
+                onPressed: () {
+                  // Implement like functionality here
+                },
               ),
-            ),
+            ],
           ),
         ],
       ),
