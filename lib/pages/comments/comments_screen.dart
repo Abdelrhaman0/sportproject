@@ -36,7 +36,13 @@ class CommentsScreen extends StatelessWidget {
           if (state is ProjectGetCommentLoadingState) {
             return Center(child: CircularProgressIndicator());
           } else if (state is ProjectCommentsLoaded) {
-            return _buildCommentListWithRefresh(context, state.comments, postId);
+            return Column(
+              children: [
+                Expanded(child:
+                _buildCommentListWithRefresh(context, state.comments, postId),),
+                _buildCommentInput(context)
+              ],
+            );
           } else if (state is ProjectGetCommentErrorState) {
             return Center(child: Text(state.error));
           } else {
@@ -127,6 +133,66 @@ class CommentsScreen extends StatelessWidget {
                 },
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCommentInput(BuildContext context) {
+    final TextEditingController commentController = TextEditingController();
+    var now = DateTime.now();
+    var formatter = DateFormat('MMM dd, yyyy hh:mm a');
+    var formattedDate = formatter.format(now);
+
+    return Container(
+      padding: EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.3),
+            spreadRadius: 2,
+            blurRadius: 5,
+            offset: Offset(0, -2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: commentController,
+              decoration: InputDecoration(
+                hintText: 'Write a comment...',
+                contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30),
+                  borderSide: BorderSide.none,
+                ),
+                filled: true,
+                fillColor: Colors.grey[200],
+              ),
+            ),
+          ),
+          SizedBox(width: 10),
+          ElevatedButton(
+            onPressed: () {
+              final comment = commentController.text.trim();
+              if (comment.isNotEmpty) {
+                ProjectCubit.get(context).createComment(
+                  text: comment,
+                  postId: postId,
+                  dateTime: formattedDate,
+                );
+                commentController.clear();
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              shape: CircleBorder(),
+              padding: EdgeInsets.all(12),
+            ),
+            child: Icon(Icons.send),
           ),
         ],
       ),

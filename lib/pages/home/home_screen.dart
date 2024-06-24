@@ -1,7 +1,5 @@
-import 'package:conditional_builder_null_safety/conditional_builder_null_safety.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:sports_project/component/conest.dart';
 import 'package:sports_project/component/other_component.dart';
 import 'package:sports_project/layout/cubit/cubit.dart';
 import 'package:sports_project/layout/cubit/states.dart';
@@ -10,25 +8,27 @@ import 'package:sports_project/pages/comments/comments_screen.dart';
 import 'package:video_player/video_player.dart';
 
 class HomeScreen extends StatelessWidget {
+
+  var likes;
+
   @override
   Widget build(BuildContext context) {
+
     return BlocConsumer<ProjectCubit, ProjectStates>(
-      listener: (context, state) {},
+      listener: (context, state) {
+        if(state is ProjectGetLikesSuccessState) likes++;
+      },
       builder: (context, state) {
         var postModel = ProjectCubit.get(context).postModel;
-        return ConditionalBuilder(
-          condition: postModel.isNotEmpty && ProjectCubit.get(context).userModel != null,
-          builder: (context) => ListView.separated(
-            physics: BouncingScrollPhysics(),
-            itemBuilder: (context, index) {
-              final post = ProjectCubit.get(context).postModel[index];
-              final postId = ProjectCubit.get(context).postId![index];
-              return buildPostItem(context, post, index, postId);
-            },
-            separatorBuilder: (context, index) => SizedBox(height: 10),
-            itemCount: postModel.length,
-          ),
-          fallback: (context) => Center(child: CircularProgressIndicator()),
+        return ListView.separated(
+          physics: BouncingScrollPhysics(),
+          itemBuilder: (context, index) {
+            final post = postModel[index];
+            final postId = ProjectCubit.get(context).postId![index];
+            return buildPostItem(context, post, index, postId);
+          },
+          separatorBuilder: (context, index) => SizedBox(height: 10),
+          itemCount: postModel.length,
         );
       },
     );
@@ -39,6 +39,7 @@ class HomeScreen extends StatelessWidget {
       ProjectCubit.get(context).initializeVideoController(postId, model.postVideo!);
     }
 
+    likes = ProjectCubit.get(context).likes[index];
     return AnimatedContainer(
       duration: Duration(milliseconds: 300),
       curve: Curves.easeInOut,
@@ -103,7 +104,6 @@ class HomeScreen extends StatelessWidget {
                     height: 200,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) {
-                      print('Failed to load image: $error\n$stackTrace');
                       return SizedBox.shrink();
                     },
                   ),
@@ -125,10 +125,7 @@ class HomeScreen extends StatelessWidget {
                         child: Stack(
                           alignment: Alignment.bottomCenter,
                           children: [
-                            FadeTransition(
-                              opacity: AlwaysStoppedAnimation(controller.value.isPlaying ? 1.0 : 0.7),
-                              child: VideoPlayer(controller),
-                            ),
+                            VideoPlayer(controller),
                             VideoProgressIndicator(
                               controller,
                               allowScrubbing: true,
@@ -137,13 +134,9 @@ class HomeScreen extends StatelessWidget {
                               onPressed: () {
                                 ProjectCubit.get(context).playPauseVideo(postId);
                               },
-                              icon: AnimatedSwitcher(
-                                duration: Duration(milliseconds: 300),
-                                child: Icon(
-                                  controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
-                                  key: ValueKey<bool>(controller.value.isPlaying),
-                                  color: Colors.white,
-                                ),
+                              icon: Icon(
+                                controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
+                                color: Colors.white,
                               ),
                             ),
                           ],
@@ -185,7 +178,7 @@ class HomeScreen extends StatelessWidget {
                   Expanded(
                     child: InkWell(
                       onTap: () {
-                        ProjectCubit.get(context).getLikes(ProjectCubit.get(context).postId[index]);
+                        ProjectCubit.get(context).getLikes(postId);
                       },
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 5),
@@ -199,7 +192,7 @@ class HomeScreen extends StatelessWidget {
                             ),
                             SizedBox(width: 5),
                             Text(
-                              '${ProjectCubit.get(context).likes[index]}',
+                              '$likes',
                               style: TextStyle(color: Colors.grey),
                             ),
                           ],

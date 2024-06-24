@@ -10,10 +10,8 @@ import 'package:sports_project/firebase_options.dart';
 import 'package:sports_project/layout/cubit/cubit.dart';
 import 'package:sports_project/layout/cubit/states.dart';
 import 'package:sports_project/layout/project_layout.dart';
-import 'package:sports_project/models/post_model.dart';
 import 'package:sports_project/pages/add_post/add_post_screen.dart';
 import 'package:sports_project/pages/chats/chat_detail.dart';
-import 'package:sports_project/pages/comments/comments_screen.dart';
 import 'package:sports_project/pages/initial_page/initial_page.dart';
 import 'package:sports_project/pages/login_page/login_page.dart';
 import 'package:sports_project/pages/profile/profile_screen.dart';
@@ -31,38 +29,45 @@ void main() async {
 
   // Fetch initial data
   token = CacheHelper.getData(key: 'token');
-
   uid = CacheHelper.getData(key: 'uid');
-  Widget projectWidget;
 
+  Widget projectWidget;
   if (uid != null) {
     projectWidget = ProjectLayout();
   } else {
     projectWidget = LoginPage();
   }
 
-  runApp(SportsProject(projectWidget));
+  runApp(SportsProject(projectWidget, uid));
 }
 
 class SportsProject extends StatelessWidget {
   final Widget projectWidget;
-  const SportsProject(this.projectWidget, {super.key});
-  // This widget is the root of your application.
+  final String? uid;
+
+  const SportsProject(this.projectWidget, this.uid, {super.key});
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => ProjectCubit()
-        ..getUser()
-        ..getPost()
-        ..getUsers()
-      ..getUserPost(uid!),
+      create: (context) {
+        final cubit = ProjectCubit();
+        if (uid != null) {
+          cubit
+            ..getUser()
+            ..getPost()
+            ..getUsers()
+            ..getUserPost(uid!);
+
+        }
+        return cubit;
+      },
       child: BlocConsumer<ProjectCubit, ProjectStates>(
         listener: (context, state) {},
         builder: (context, state) {
           return MaterialApp(
             debugShowCheckedModeBanner: false,
             theme: lightTheme,
-            // darkTheme: darkTheme,
             routes: {
               InitialPage.id: (context) => InitialPage(),
               LoginPage.id: (context) => LoginPage(),

@@ -1,6 +1,6 @@
-import 'package:conditional_builder_null_safety/conditional_builder_null_safety.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:conditional_builder_null_safety/conditional_builder_null_safety.dart';
 import 'package:sports_project/component/conest.dart';
 import 'package:sports_project/component/other_component.dart';
 import 'package:sports_project/layout/cubit/cubit.dart';
@@ -9,19 +9,30 @@ import 'package:sports_project/models/post_model.dart';
 import 'package:sports_project/models/user_model.dart';
 import 'package:sports_project/pages/chats/chat_detail.dart';
 import 'package:sports_project/pages/comments/comments_screen.dart';
-import 'package:sports_project/pages/setting/setting_screen.dart';
+import 'package:video_player/video_player.dart';
 
 class UsersProfileScreen extends StatelessWidget {
   UsersProfileScreen({required this.model});
-
   final UserModel model;
   int postNumber = 0;
 
   @override
   Widget build(BuildContext context) {
+    final cubit = ProjectCubit.get(context);
+    cubit.getFollowerUsers(model.uid as String, forCurrentUser: false);
+    cubit.getFollowingUsers(model.uid as String, forCurrentUser: false);
+
     return BlocConsumer<ProjectCubit, ProjectStates>(
-      listener: (context, state) {},
+      listener: (context, state) {
+        if (state is UnfollowSuccessState || state is FollowSuccessState) {
+          cubit.getFollowerUsers(model.uid as String, forCurrentUser: false);
+          cubit.getFollowingUsers(model.uid as String, forCurrentUser: false);
+        }
+      },
       builder: (context, state) {
+        final userPosts = cubit.postModel;
+        postNumber = userPosts.where((post) => post.uid == model.uid).length;
+
         return Scaffold(
           appBar: AppBar(
             title: Text('${model.name}'),
@@ -41,7 +52,7 @@ class UsersProfileScreen extends StatelessWidget {
                           child: CircleAvatar(
                             radius: 54,
                             backgroundColor:
-                            Theme.of(context).scaffoldBackgroundColor,
+                                Theme.of(context).scaffoldBackgroundColor,
                             child: CircleAvatar(
                               radius: 50,
                               backgroundImage: NetworkImage(
@@ -77,7 +88,7 @@ class UsersProfileScreen extends StatelessWidget {
                                   style: Theme.of(context).textTheme.subtitle1,
                                 ),
                                 Text(
-                                  '1M',
+                                  '${cubit.otherUserFollowers.length}', // Replace with actual follower count logic if needed
                                   style: Theme.of(context).textTheme.caption,
                                 ),
                               ],
@@ -94,7 +105,7 @@ class UsersProfileScreen extends StatelessWidget {
                                   style: Theme.of(context).textTheme.subtitle1,
                                 ),
                                 Text(
-                                  '35',
+                                  '${cubit.otherUserFollowing.length}', // Replace with actual following count logic if needed
                                   style: Theme.of(context).textTheme.caption,
                                 ),
                               ],
@@ -104,9 +115,7 @@ class UsersProfileScreen extends StatelessWidget {
                         )
                       ],
                     ),
-                    SizedBox(
-                      height: 5,
-                    ),
+                    SizedBox(height: 5),
                     Padding(
                       padding: const EdgeInsets.only(left: 20),
                       child: Row(
@@ -118,9 +127,7 @@ class UsersProfileScreen extends StatelessWidget {
                         ],
                       ),
                     ),
-                    SizedBox(
-                      height: 10,
-                    ),
+                    SizedBox(height: 10),
                     Padding(
                       padding: const EdgeInsets.only(left: 20),
                       child: Text(
@@ -128,49 +135,59 @@ class UsersProfileScreen extends StatelessWidget {
                         style: Theme.of(context).textTheme.caption,
                       ),
                     ),
-                    SizedBox(
-                      height: 50,
-                    ),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () {},
-                            style: ButtonStyle(
-                              backgroundColor: MaterialStateProperty.all(
-                                  kPrimaryColor), // Text color
+                    SizedBox(height: 50),
+                    FutureBuilder<bool>(
+                      future: cubit.isFollowing1(model.uid as String),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return Center(child: CircularProgressIndicator());
+                        }
+                        final isFollowing = snapshot.data ?? false;
+
+                        return Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: () {
+                                  if (isFollowing) {
+                                    cubit.unfollowUser(model.uid as String);
+                                  } else {
+                                    cubit.followUser(model.uid as String);
+                                  }
+                                },
+                                style: ButtonStyle(
+                                  backgroundColor: MaterialStateProperty.all(
+                                    kPrimaryColor,
+                                  ),
+                                ),
+                                child: Text(
+                                  isFollowing ? 'Following' : 'Follow',
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              ),
                             ),
-                            child: Text(
-                              'Follow',
-                              style: TextStyle(color: Colors.white),
+                            SizedBox(width: 10),
+                            OutlinedButton(
+                              onPressed: () {
+                                navigateTo(context,
+                                    ChatDetailsScreen(userModel: model));
+                              },
+                              child: Text('Message'),
                             ),
-                          ),
-                        ),
-                        SizedBox(
-                          width: 10,
-                        ),
-                        OutlinedButton(
-                            onPressed: () {
-                              navigateTo(context, ChatDetailsScreen(userModel: model));
-                            },
-                            child: Text('Message'))
-                      ],
+                          ],
+                        );
+                      },
                     ),
-                    SizedBox(
-                      height: 10,
-                    ),
+                    SizedBox(height: 10),
                     myDivider(),
-                    SizedBox(
-                      height: 20,
-                    ),
+                    SizedBox(height: 20),
                     buildPostList(context, '${model.uid}'),
                   ],
                 ),
               ),
             ),
-            fallback: (context) => Center(
-              child: CircularProgressIndicator(),
-            ),
+            fallback: (context) => Center(child: CircularProgressIndicator()),
           ),
         );
       },
@@ -179,7 +196,6 @@ class UsersProfileScreen extends StatelessWidget {
 
   Widget buildPostList(BuildContext context, String userId) {
     final userPosts = ProjectCubit.get(context).postModel;
-    postNumber = userPosts.where((post) => post.uid == userId).length;
 
     return ListView.separated(
       shrinkWrap: true,
@@ -197,6 +213,11 @@ class UsersProfileScreen extends StatelessWidget {
   Widget buildPostItem(BuildContext context, PostModel model, int index,
       String postId, String userId) {
     if (model.uid == userId) {
+      if (model.postVideo != null && model.postVideo!.isNotEmpty) {
+        ProjectCubit.get(context)
+            .initializeVideoController(postId, model.postVideo!);
+      }
+
       return Card(
         clipBehavior: Clip.antiAliasWithSaveLayer,
         elevation: 6,
@@ -263,6 +284,42 @@ class UsersProfileScreen extends StatelessWidget {
                     },
                   ),
                 ),
+              if (model.postVideo != null && model.postVideo!.isNotEmpty)
+                BlocBuilder<ProjectCubit, ProjectStates>(
+                  builder: (context, state) {
+                    var controller =
+                        ProjectCubit.get(context).postVideoControllers[postId];
+                    if (controller == null || !controller.value.isInitialized) {
+                      return Center(child: CircularProgressIndicator());
+                    }
+                    return Padding(
+                      padding: const EdgeInsetsDirectional.only(top: 15),
+                      child: AspectRatio(
+                        aspectRatio: controller.value.aspectRatio,
+                        child: Stack(
+                          alignment: Alignment.bottomCenter,
+                          children: [
+                            VideoPlayer(controller),
+                            VideoProgressIndicator(controller,
+                                allowScrubbing: true),
+                            IconButton(
+                              onPressed: () {
+                                ProjectCubit.get(context)
+                                    .playPauseVideo(postId);
+                              },
+                              icon: Icon(
+                                controller.value.isPlaying
+                                    ? Icons.pause
+                                    : Icons.play_arrow,
+                              ),
+                              color: Colors.white,
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 5),
                 child: Row(
@@ -270,18 +327,15 @@ class UsersProfileScreen extends StatelessWidget {
                     Expanded(
                       child: InkWell(
                         onTap: () {
+                          ProjectCubit.get(context).getComment(postId);
                           navigateTo(context, CommentsScreen(postId: postId));
-                          print(postId);
                         },
                         child: Padding(
                           padding: const EdgeInsets.symmetric(vertical: 5),
                           child: Row(
                             children: [
-                              Icon(
-                                Icons.comment_outlined,
-                                size: 18,
-                                color: Colors.amber,
-                              ),
+                              Icon(Icons.comment_outlined,
+                                  size: 18, color: Colors.amber),
                               SizedBox(width: 5),
                               Text(
                                 '0',
@@ -295,19 +349,15 @@ class UsersProfileScreen extends StatelessWidget {
                     Expanded(
                       child: InkWell(
                         onTap: () {
-                          ProjectCubit.get(context)
-                              .getLikes(ProjectCubit.get(context).postId[index]);
+                          ProjectCubit.get(context).getLikes(postId);
                         },
                         child: Padding(
                           padding: const EdgeInsets.symmetric(vertical: 5),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: [
-                              Icon(
-                                Icons.favorite_border,
-                                size: 18,
-                                color: Colors.red,
-                              ),
+                              Icon(Icons.favorite_border,
+                                  size: 18, color: Colors.red),
                               SizedBox(width: 5),
                               Text(
                                 '${ProjectCubit.get(context).likes[index]}',
@@ -334,7 +384,7 @@ class UsersProfileScreen extends StatelessWidget {
         ),
       );
     } else {
-      return SizedBox(width: 0);
+      return SizedBox.shrink();
     }
   }
 }
