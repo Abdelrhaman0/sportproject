@@ -1,139 +1,171 @@
-
 import 'package:sports_project/models/comment_model.dart';
 
 abstract class ProjectStates {}
 
-class ProjectInitialState extends ProjectStates{}
+class ProjectInitialState extends ProjectStates {}
 
-class ProjectGetUserLoadingState extends ProjectStates{}
+class ProjectGetUserLoadingState extends ProjectStates {}
 
-class ProjectGetUserSuccessState extends ProjectStates{}
+class ProjectGetUserSuccessState extends ProjectStates {}
 
-class ProjectGetUserErrorState extends ProjectStates{
+class ProjectGetUserErrorState extends ProjectStates {
   final String error;
 
   ProjectGetUserErrorState(this.error);
 }
 
-class ProjectGetAllUserLoadingState extends ProjectStates{}
+class ProjectGetAllUserLoadingState extends ProjectStates {}
 
-class ProjectGetAllUserSuccessState extends ProjectStates{}
+class ProjectGetAllUserSuccessState extends ProjectStates {}
 
-class ProjectGetAllUserErrorState extends ProjectStates{
+class ProjectGetAllUserErrorState extends ProjectStates {
   final String error;
 
   ProjectGetAllUserErrorState(this.error);
 }
 
-class ProjectAddPostState extends ProjectStates{}
+class ProjectAddPostState extends ProjectStates {}
 
-class ProjectChangeBottomNavState extends ProjectStates{}
+class ProjectChangeBottomNavState extends ProjectStates {}
 
-class ProjectProfilePickedImageSuccessState extends ProjectStates{}
+class ProjectProfilePickedImageSuccessState extends ProjectStates {}
 
-class ProjectProfilePickedImageErrorState extends ProjectStates{}
+class ProjectProfilePickedImageErrorState extends ProjectStates {}
 
-class ProjectCoverPickedImageSuccessState extends ProjectStates{}
+class ProjectCoverPickedImageSuccessState extends ProjectStates {}
 
-class ProjectCoverPickedImageErrorState extends ProjectStates{}
+class ProjectCoverPickedImageErrorState extends ProjectStates {}
 
-class ProjectUploadProfileImageSuccessState extends ProjectStates{}
+class ProjectUploadProfileImageSuccessState extends ProjectStates {}
 
-class ProjectUploadProfileImageErrorState extends ProjectStates{}
+class ProjectUploadProfileImageErrorState extends ProjectStates {}
 
-class ProjectUploadCoverImageSuccessState extends ProjectStates{}
+class ProjectUploadCoverImageSuccessState extends ProjectStates {}
 
-class ProjectUploadCoverImageErrorState extends ProjectStates{}
+class ProjectUploadCoverImageErrorState extends ProjectStates {}
 
-class ProjectUploadUserErrorState extends ProjectStates{}
+class ProjectUploadUserErrorState extends ProjectStates {}
 
-class ProjectUploadUserLoadingState extends ProjectStates{}
+class ProjectUploadUserLoadingState extends ProjectStates {}
 
-class ProjectCreatePostLoadingState extends ProjectStates{}
+class ProjectCreatePostLoadingState extends ProjectStates {}
 
-class ProjectCreatePostSuccessState extends ProjectStates{}
+class ProjectCreatePostSuccessState extends ProjectStates {}
 
-class ProjectCreatePostErrorState extends ProjectStates{}
+class ProjectCreatePostErrorState extends ProjectStates {}
 
-class ProjectPostPickedImageSuccessState extends ProjectStates{}
+class ProjectPostPickedImageSuccessState extends ProjectStates {}
 
-class ProjectPostPickedImageErrorState extends ProjectStates{}
+class ProjectPostPickedImageErrorState extends ProjectStates {}
 
-class ProjectRemovePostImageSuccessState extends ProjectStates{}
+class ProjectRemovePostImageSuccessState extends ProjectStates {}
 
-class ProjectGetPostLoadingState extends ProjectStates{}
+class ProjectGetPostLoadingState extends ProjectStates {}
 
-class ProjectGetPostSuccessState extends ProjectStates{}
+class ProjectGetPostSuccessState extends ProjectStates {}
 
-class ProjectGetPostErrorState extends ProjectStates{
+class ProjectGetPostErrorState extends ProjectStates {
   final String error;
 
   ProjectGetPostErrorState(this.error);
 }
 
-class ProjectSendMassageErrorState extends ProjectStates{}
+class ProjectSendMassageErrorState extends ProjectStates {}
 
-class ProjectSendMassageSuccessState extends ProjectStates{}
+class ProjectSendMassageSuccessState extends ProjectStates {}
 
-class ProjectGetMassageSuccessState extends ProjectStates{}
+class ProjectGetMassageSuccessState extends ProjectStates {}
 
-class ProjectGetLikesSuccessState extends ProjectStates{}
+class ProjectGetLikesSuccessState extends ProjectStates {}
 
-class ProjectGetLikesErrorState extends ProjectStates{
+class ProjectGetLikesErrorState extends ProjectStates {
   final String error;
 
   ProjectGetLikesErrorState(this.error);
 }
 
-class NewsGetSportsLoadingState extends ProjectStates{}
+class NewsGetSportsLoadingState extends ProjectStates {}
 
-class NewsGetSportsSuccessState extends ProjectStates{}
+class NewsGetSportsSuccessState extends ProjectStates {}
 
-class NewsGetSportsErrorState extends ProjectStates{
+class NewsGetSportsErrorState extends ProjectStates {
   final String error;
   NewsGetSportsErrorState(this.error);
 }
 
-class ProjectCreateCommentLoadingState extends ProjectStates{}
+class ProjectCreateCommentLoadingState extends ProjectStates {}
 
-class ProjectCreateCommentSuccessState extends ProjectStates{}
+class ProjectCreateCommentSuccessState extends ProjectStates {}
 
-class ProjectCreateCommentErrorState extends ProjectStates{}
+class ProjectCreateCommentErrorState extends ProjectStates {}
 
-class ProjectGetCommentLoadingState extends ProjectStates{}
+class ProjectGetCommentLoadingState extends ProjectStates {}
 
-class ProjectGetCommentSuccessState extends ProjectStates{}
+class ProjectGetCommentSuccessState extends ProjectStates {}
 
-class ProjectGetCommentErrorState extends ProjectStates{
+class ProjectGetCommentErrorState extends ProjectStates {
   final String error;
 
   ProjectGetCommentErrorState(this.error);
 }
 
-class ProjectGetCommentEmptyState extends ProjectStates{}
+class ProjectGetCommentEmptyState extends ProjectStates {}
 
-class ProjectSignOutLoadingState extends ProjectStates{}
+class ProjectSignOutLoadingState extends ProjectStates {}
 
-class ProjectSignOutSuccessState extends ProjectStates{}
+class ProjectSignOutSuccessState extends ProjectStates {}
 
-class ProjectSignOutErrorState extends ProjectStates{}
+class ProjectSignOutErrorState extends ProjectStates {}
 
-class ProjectPostVideoPickedSuccessState extends ProjectStates{}
+class ProjectPostVideoPickedSuccessState extends ProjectStates {}
 
-class ProjectPostVideoPickedErrorState extends ProjectStates{}
+class ProjectPostVideoPickedErrorState extends ProjectStates {}
 
-class ProjectPostVideoRemovedState extends ProjectStates{}
+class ProjectPostVideoRemovedState extends ProjectStates {}
 
-class ProjectVideoInitializedState extends ProjectStates{
+class ProjectVideoInitializedState extends ProjectStates {
   final String postId;
 
   ProjectVideoInitializedState(this.postId);
 }
 
-class ProjectVideoPlayPauseState extends ProjectStates{}
+class ProjectVideoPlayPauseState extends ProjectStates {}
 
 class ProjectCommentsLoaded extends ProjectStates {
   final List<CommentModel> comments;
 
   ProjectCommentsLoaded(this.comments);
 }
+
+class ProjectVideoDisposedState extends ProjectStates {
+  final String postId;
+  ProjectVideoDisposedState(this.postId);
+}
+
+class InitialState extends ProjectStates {}
+
+class FollowSuccessState extends ProjectStates {}
+
+class FollowErrorState extends ProjectStates {}
+
+class UnfollowSuccessState extends ProjectStates {}
+
+class UnfollowErrorState extends ProjectStates {}
+
+class FollowersLoadedState extends ProjectStates {}
+
+class ProjectYourFitState extends ProjectStates{}
+
+class ProjectGetSpecificUserSuccessState extends ProjectStates{}
+
+class ProjectGetSpecificUserErrorState extends ProjectStates{}
+
+class FollowingLoadedState extends ProjectStates {}
+
+class GetFollowingUsersSuccessState extends ProjectStates{}
+
+class GetFollowingUsersErrorState extends  ProjectStates{}
+
+class GetFollowersUsersSuccessState extends ProjectStates{}
+
+class GetFollowersUsersErrorState extends ProjectStates{}

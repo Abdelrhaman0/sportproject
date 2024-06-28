@@ -18,7 +18,7 @@ class UserModel {
     this.bio,
     this.isEmailVerified,
   });
-  UserModel.formJson(Map<String, dynamic> json)
+  UserModel.fromJson(Map<String, dynamic> json)
       : name = json['name'],
         email = json['email'],
         phone = json['phone'],

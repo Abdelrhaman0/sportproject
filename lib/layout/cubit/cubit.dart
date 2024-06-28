@@ -9,6 +9,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:sports_project/DatabaseMethods.dart';
+import 'package:sports_project/ML_model/model.dart';
 import 'package:sports_project/component/conest.dart';
 import 'package:sports_project/component/shared/cache_helper.dart';
 import 'package:sports_project/layout/cubit/states.dart';
@@ -36,12 +38,23 @@ class ProjectCubit extends Cubit<ProjectStates> {
     emit(ProjectGetUserLoadingState());
 
     FirebaseFirestore.instance.collection('users').doc(uid).get().then((value) {
-      userModel = UserModel.formJson(value.data() as Map<String, dynamic>);
+      userModel = UserModel.fromJson(value.data() as Map<String, dynamic>);
       emit(ProjectGetUserSuccessState());
     }).catchError((error) {
       print(error);
       emit(ProjectGetUserErrorState(error.toString()));
     });
+  }
+
+  UserModel? specificUserModel;
+
+  Future<void> getSpecificUser(String userId)  async{
+    try {
+      var userDoc = await FirebaseFirestore.instance.collection('users').doc(userId).get();
+      specificUserModel = UserModel.fromJson(userDoc.data() as Map<String, dynamic>);
+    } catch (error) {
+      print(error);
+    }
   }
 
   List<PostModel> postModel = [];
@@ -52,19 +65,19 @@ class ProjectCubit extends Cubit<ProjectStates> {
   List<Widget> screens = [
     HomeScreen(),
     NewsScreen(),
-    AddPostScreen(),
+    HealthMetricsScreen(),
     ChatsScreen(),
     ProfileScreen(),
   ];
 
-  List<String> title = ['Home', 'News', 'Posts', 'Chats', 'Profile'];
+  List<String> title = ['Home', 'News', 'Your Fit', 'Chats', 'Profile'];
 
   void changeBottomNav(int index) {
     if (index == 0 && postModel == null) {
       getPost();
     }
     if (index == 2) {
-      emit(ProjectAddPostState());
+      emit(ProjectYourFitState());
     } else {
       currentIndex = index;
       emit(ProjectChangeBottomNavState());
@@ -154,6 +167,7 @@ class ProjectCubit extends Cubit<ProjectStates> {
 
   File? postImage;
   File? postVideo;
+  Map<String, VideoPlayerController?> postVideoControllers = {};
 
   void removePostImage() {
     postImage = null;
@@ -225,12 +239,11 @@ class ProjectCubit extends Cubit<ProjectStates> {
     });
   }
 
-
   VideoPlayerController? postVideoController;
 
-
   Future<void> getPostVideo() async {
-    final pickedFile = await ImagePicker().pickVideo(source: ImageSource.gallery);
+    final pickedFile =
+        await ImagePicker().pickVideo(source: ImageSource.gallery);
     if (pickedFile != null) {
       postVideo = File(pickedFile.path);
       postVideoController = VideoPlayerController.file(postVideo!)
@@ -247,7 +260,8 @@ class ProjectCubit extends Cubit<ProjectStates> {
     emit(ProjectPostVideoRemovedState());
   }
 
-  Future<void> uploadPostVideo({required String text, required String dateTime}) async {
+  Future<void> uploadPostVideo(
+      {required String text, required String dateTime}) async {
     emit(ProjectCreatePostLoadingState());
     final videoUploadResult = await FirebaseStorage.instance
         .ref()
@@ -258,30 +272,28 @@ class ProjectCubit extends Cubit<ProjectStates> {
     createPost(text: text, dateTime: dateTime, postVideo: videoUrl);
   }
 
-  Map<String, VideoPlayerController?> postVideoControllers = {};
-
-  VideoPlayerController? controller;
-
-  void initializeVideoController(String postId, String videoUrl) {
-    if (postVideoControllers[postId] == null) {
-      print('Initializing video controller for postId: $postId with videoUrl: $videoUrl');
-       controller = VideoPlayerController.network(videoUrl)
-        ..initialize().then((_) {
-          postVideoControllers[postId] = controller;
-          emit(ProjectVideoInitializedState(postId));
-          print('Video controller initialized for postId: $postId');
-        }).catchError((error) {
-          print('Error initializing video controller for postId: $postId, error: $error');
-        });
-    } else {
-      print('Video controller already exists for postId: $postId');
+  Future<void> initializeVideoController(String postId, String videoUrl) async {
+    if (!postVideoControllers.containsKey(postId)) {
+      var controller = VideoPlayerController.network(videoUrl);
+      await controller.initialize().then((_) {
+        postVideoControllers[postId] = controller;
+        emit(ProjectVideoInitializedState(postId));
+      }).catchError((error) {
+        print(
+            'Error initializing video controller for postId: $postId, error: $error');
+      });
     }
   }
 
-
+  Future<void> initializePostVideoController(String videoUrl) async {
+    final controller = postVideoControllers[videoUrl];
+    if (controller != null && !controller.value.isInitialized) {
+      await controller.initialize();
+    }
+  }
 
   void playPauseVideo(String postId) {
-    final controller = postVideoControllers[postId];
+    var controller = postVideoControllers[postId];
     if (controller != null) {
       if (controller.value.isPlaying) {
         controller.pause();
@@ -297,7 +309,7 @@ class ProjectCubit extends Cubit<ProjectStates> {
   void disposeVideoController(String postId) {
     postVideoControllers[postId]?.dispose();
     postVideoControllers.remove(postId);
-    print('Disposed video controller for postId: $postId');
+    emit(ProjectVideoDisposedState(postId));
   }
 
   @override
@@ -316,8 +328,8 @@ class ProjectCubit extends Cubit<ProjectStates> {
   List<int> userLikes = [];
   List<String> userPostId = [];
 
-
   void getPost() {
+
     emit(ProjectGetPostLoadingState());
 
     FirebaseFirestore.instance.collection('posts').get().then((value) {
@@ -335,9 +347,13 @@ class ProjectCubit extends Cubit<ProjectStates> {
     });
   }
 
-  void getUserPost(String userId) {
 
-    FirebaseFirestore.instance.collection('posts').where('uid', isEqualTo: userId).get().then((value) {
+  void getUserPost(String userId) {
+    FirebaseFirestore.instance
+        .collection('posts')
+        .where('uid', isEqualTo: userId)
+        .get()
+        .then((value) {
       for (var element in value.docs) {
         element.reference.collection('likes').get().then((value) {
           userLikes.add(value.docs.length);
@@ -350,6 +366,23 @@ class ProjectCubit extends Cubit<ProjectStates> {
     });
   }
 
+  void getUsersPost(String userId) {
+    FirebaseFirestore.instance
+        .collection('posts')
+        .where('uid', isEqualTo: userId)
+        .get()
+        .then((value) {
+      for (var element in value.docs) {
+        element.reference.collection('likes').get().then((value) {
+          userLikes.add(value.docs.length);
+          userPostModel.add(PostModel.formJson(element.data()));
+          userPostId.add(element.id);
+        });
+      }
+    }).catchError((error) {
+      print(error);
+    });
+  }
 
   void getComment(String postId) async {
     emit(ProjectGetCommentLoadingState());
@@ -377,8 +410,6 @@ class ProjectCubit extends Cubit<ProjectStates> {
       emit(ProjectGetCommentErrorState(error.toString()));
     }
   }
-
-
 
   void createComment({
     required String text,
@@ -432,7 +463,7 @@ class ProjectCubit extends Cubit<ProjectStates> {
         for (var element in value.docs) {
           var userData = element.data();
           if (userData != null && userData['uid'] != userModel!.uid) {
-            users.add(UserModel.formJson(userData));
+            users.add(UserModel.fromJson(userData));
           }
         }
         emit(ProjectGetAllUserSuccessState());
@@ -443,15 +474,20 @@ class ProjectCubit extends Cubit<ProjectStates> {
     }
   }
 
-  void sendMassage(
-      {required String? text,
-      required String? receiverId,
-      required String? dateTime}) {
+  void sendMassage({
+    required String? text,
+    required String? receiverId,
+    required String? dateTime,
+    required String? imageUrl,
+    required String videoUrl,
+  }) {
     MassageModel model = MassageModel(
       text: text,
       senderId: userModel!.uid,
       receiverId: receiverId,
       dateTime: dateTime,
+      imageUrl: imageUrl,
+      videoUrl: videoUrl,
     );
 
     // set my chats
@@ -504,7 +540,6 @@ class ProjectCubit extends Cubit<ProjectStates> {
       emit(ProjectGetMassageSuccessState());
     });
   }
-
   void singOut() async {
     emit(ProjectSignOutLoadingState());
     await FirebaseAuth.instance.signOut();
@@ -515,33 +550,158 @@ class ProjectCubit extends Cubit<ProjectStates> {
         as String?;
   }
 
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  Future<void> followUser(String uid, String followId) async {
+  List<String> followingUsers = [];
+
+  User? getCurrentUser() {
+    return FirebaseAuth.instance.currentUser;
+  }
+
+  List<UserModel> currentUserFollowers = [];
+  List<UserModel> currentUserFollowing = [];
+  List<UserModel> otherUserFollowers = [];
+  List<UserModel> otherUserFollowing = [];
+
+  void followUser(String userToFollowId) async {
     try {
-      DocumentSnapshot snap =
-          await _firestore.collection('users').doc(uid).get();
-      List following = (snap.data()! as dynamic)['following'];
+      final currentUser = getCurrentUser();
+      if (currentUser != null) {
+        final currentUserDoc = FirebaseFirestore.instance.collection('users').doc(currentUser.uid);
+        final userToFollowDoc = FirebaseFirestore.instance.collection('users').doc(userToFollowId);
 
-      if (following.contains(followId)) {
-        await _firestore.collection('users').doc(followId).update({
-          'followers': FieldValue.arrayRemove([uid])
-        });
+        // Update current user's following list
+        await currentUserDoc.collection('following').doc(userToFollowId).set({});
 
-        await _firestore.collection('users').doc(uid).update({
-          'following': FieldValue.arrayRemove([followId])
-        });
+        // Update target user's followers list
+        await userToFollowDoc.collection('followers').doc(currentUser.uid).set({});
+
+        currentUserFollowing.add(UserModel(uid: userToFollowId)); // Assuming UserModel has a constructor accepting only uid
+        emit(FollowSuccessState());
+        await getFollowerUsers(userToFollowId, forCurrentUser: false);
+        await getFollowingUsers(currentUser.uid, forCurrentUser: true);
       } else {
-        await _firestore.collection('users').doc(followId).update({
-          'followers': FieldValue.arrayUnion([uid])
-        });
-
-        await _firestore.collection('users').doc(uid).update({
-          'following': FieldValue.arrayUnion([followId])
-        });
+        emit(FollowErrorState());
       }
     } catch (e) {
-      if (kDebugMode) print(e.toString());
+      print("Error following user: $e");
+      emit(FollowErrorState());
     }
   }
-}
+
+  void unfollowUser(String userToUnfollowId) async {
+    try {
+      final currentUser = getCurrentUser();
+      if (currentUser != null) {
+        final currentUserDoc = FirebaseFirestore.instance.collection('users').doc(currentUser.uid);
+        final userToUnfollowDoc = FirebaseFirestore.instance.collection('users').doc(userToUnfollowId);
+
+        // Remove from current user's following list
+        await currentUserDoc.collection('following').doc(userToUnfollowId).delete();
+
+        // Remove from target user's followers list
+        await userToUnfollowDoc.collection('followers').doc(currentUser.uid).delete();
+
+        currentUserFollowing.removeWhere((user) => user.uid == userToUnfollowId);
+        emit(UnfollowSuccessState());
+        await getFollowerUsers(userToUnfollowId, forCurrentUser: false);
+        await getFollowingUsers(currentUser.uid, forCurrentUser: true);
+      } else {
+        emit(UnfollowErrorState());
+      }
+    } catch (e) {
+      print("Error unfollowing user: $e");
+      emit(UnfollowErrorState());
+    }
+  }
+
+  Future<void> getFollowerUsers(String userId, {bool forCurrentUser = false}) async {
+    try {
+      QuerySnapshot followersSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('followers')
+          .get();
+
+      List<UserModel> followersList = followersSnapshot.docs
+          .map((doc) => UserModel.fromJson(doc.data() as Map<String, dynamic>))
+          .toList();
+
+      if (forCurrentUser) {
+        currentUserFollowers = followersList;
+      } else {
+        otherUserFollowers = followersList;
+      }
+
+      emit(GetFollowersUsersSuccessState());
+    } catch (e) {
+      print(e);
+      emit(GetFollowersUsersErrorState());
+    }
+  }
+
+  Future<void> getFollowingUsers(String userId, {bool forCurrentUser = false}) async {
+    try {
+      QuerySnapshot followingSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('following')
+          .get();
+
+      List<UserModel> followingList = followingSnapshot.docs
+          .map((doc) => UserModel.fromJson(doc.data() as Map<String, dynamic>))
+          .toList();
+
+      if (forCurrentUser) {
+        currentUserFollowing = followingList;
+      } else {
+        otherUserFollowing = followingList;
+      }
+
+      emit(GetFollowingUsersSuccessState());
+    } catch (e) {
+      print(e);
+      emit(GetFollowingUsersErrorState());
+    }
+  }
+
+  Future<bool> isFollowing(String userId) async {
+    final currentUser = getCurrentUser();
+    if (currentUser != null) {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUser.uid)
+          .collection('following')
+          .doc(userId)
+          .get();
+      return doc.exists;
+    }
+    return false;
+  }
+  Future<bool> isFollowing1(String userToCheckUid) async {
+    try {
+      final currentUserUid = getCurrentUser()?.uid;
+      if (currentUserUid != null) {
+        final doc = await FirebaseFirestore.instance.collection('users').doc(currentUserUid)
+            .collection('following').doc(userToCheckUid).get();
+        return doc.exists;
+      }
+      return false;
+    } catch (e) {
+      print("Error checking if following: $e");
+      return false;
+    }
+  }
+
+  void updateFollowingStatus(String userId) async {
+    bool isFollowing = await isFollowing1(userId);
+    if (isFollowing) {
+      followingUsers.add(userId);
+    } else {
+      followingUsers.remove(userId);
+    }
+    emit(ProjectInitialState());
+  }
+
+
+  }
+

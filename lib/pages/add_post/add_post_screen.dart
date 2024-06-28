@@ -7,16 +7,6 @@ import 'package:sports_project/component/other_component.dart';
 import 'package:sports_project/layout/cubit/cubit.dart';
 import 'package:sports_project/layout/cubit/states.dart';
 import 'package:sports_project/layout/project_layout.dart';
-import 'package:sports_project/pages/home/home_screen.dart';
-
-import 'package:video_player/video_player.dart';
-
-import 'dart:io';
-
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:sports_project/layout/cubit/cubit.dart';
-import 'package:sports_project/layout/cubit/states.dart';
 import 'package:video_player/video_player.dart';
 
 class AddPostScreen extends StatelessWidget {
@@ -30,12 +20,13 @@ class AddPostScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocConsumer<ProjectCubit, ProjectStates>(
       listener: (context, state) {
-        if(state is ProjectCreatePostSuccessState){
+        if (state is ProjectCreatePostSuccessState) {
           ProjectCubit.get(context).postModel.clear();
           ProjectCubit.get(context).getPost();
         }
-        if(state is ProjectGetPostSuccessState){
-          navigateTo(context, ProjectLayout());
+        if (state is ProjectGetPostSuccessState) {
+          ProjectCubit.get(context).currentIndex = 0;
+          Navigator.pushNamedAndRemoveUntil(context, ProjectLayout.id, (route) => false);
         }
       },
       builder: (context, state) {
@@ -66,8 +57,6 @@ class AddPostScreen extends StatelessWidget {
                     cubit.uploadPostVideo(
                         text: postController.text, dateTime: formattedDate.toString());
                   }
-                  
-
                 },
                 child: Text('POST'),
               ),
@@ -212,5 +201,3 @@ class AddPostScreen extends StatelessWidget {
     );
   }
 }
-
-

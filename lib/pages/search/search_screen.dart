@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:sports_project/component/other_component.dart';
+import 'package:sports_project/layout/cubit/cubit.dart';
 import 'package:sports_project/models/user_model.dart';
 import 'package:sports_project/pages/user_profile_page/user_profile_screen.dart';
 
@@ -119,6 +120,8 @@ class _SearchScreenState extends State<SearchScreen> {
         final user = _searchResults[index];
         return InkWell(
           onTap: (){
+            ProjectCubit.get(context).getFollowingUsers(user.uid as String);
+            ProjectCubit.get(context).getFollowerUsers(user.uid as String);
             navigateTo(context, UsersProfileScreen(model: user,));
           },
           child: ListTile(
