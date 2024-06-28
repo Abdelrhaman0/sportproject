@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:news_api_flutter_package/model/article.dart';
 import 'package:news_api_flutter_package/news_api_flutter_package.dart';
-import 'package:sports_project/component/conest.dart';
 import 'package:sports_project/pages/news/news_web_view.dart';
 
 class NewsScreen extends StatefulWidget {
@@ -43,97 +42,38 @@ class _NewsScreenState extends State<NewsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // appBar: isSearching ? searchAppBar() : appBar(),
       body: SafeArea(
-          child: Column(
-        children: [
-          // _buildCategories(),
-          Expanded(
-            child: FutureBuilder(
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(
-                    child: CircularProgressIndicator(),
-                  );
-                } else if (snapshot.hasError) {
-                  return const Center(
-                    child: Text("Error loading the news"),
-                  );
-                } else {
-                  if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-                    return _buildNewsListView(snapshot.data as List<Article>);
-                  } else {
+        child: Column(
+          children: [
+            Expanded(
+              child: FutureBuilder(
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(
-                      child: Text("No news available"),
+                      child: CircularProgressIndicator(),
                     );
+                  } else if (snapshot.hasError) {
+                    return const Center(
+                      child: Text("Error loading the news"),
+                    );
+                  } else {
+                    if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                      return _buildNewsListView(snapshot.data as List<Article>);
+                    } else {
+                      return const Center(
+                        child: Text("No news available"),
+                      );
+                    }
                   }
-                }
-              },
-              future: future,
-            ),
-          )
-        ],
-      )),
+                },
+                future: future,
+              ),
+            )
+          ],
+        ),
+      ),
     );
   }
-
-  // searchAppBar() {
-  //   return AppBar(
-  //     backgroundColor: kPrimaryColor,
-  //     leading: IconButton(
-  //       icon: const Icon(Icons.arrow_back),
-  //       onPressed: () {
-  //         setState(() {
-  //           isSearching = false;
-  //           searchTerm = null;
-  //           searchController.text = "";
-  //           future = getNewsData();
-  //         });
-  //       },
-  //     ),
-  //     title: TextField(
-  //       controller: searchController,
-  //       style: const TextStyle(color: Colors.white),
-  //       cursorColor: Colors.white,
-  //       decoration: const InputDecoration(
-  //         hintText: "Search",
-  //         hintStyle: TextStyle(color: Colors.white70),
-  //         enabledBorder: UnderlineInputBorder(
-  //           borderSide: BorderSide(color: Colors.transparent),
-  //         ),
-  //         focusedBorder: UnderlineInputBorder(
-  //           borderSide: BorderSide(color: Colors.transparent),
-  //         ),
-  //       ),
-  //     ),
-  //     actions: [
-  //       IconButton(
-  //           onPressed: () {
-  //             setState(() {
-  //               searchTerm = searchController.text;
-  //               future = getNewsData();
-  //             });
-  //           },
-  //           icon: const Icon(Icons.search)),
-  //     ],
-  //   );
-  // }
-  //
-  // appBar() {
-  //   return AppBar(
-  //     backgroundColor: Colors.green,
-  //     title: const Text("NEWS NOW"),
-  //     actions: [
-  //       IconButton(
-  //           onPressed: () {
-  //             setState(() {
-  //               isSearching = true;
-  //             });
-  //           },
-  //           icon: const Icon(Icons.search)),
-  //     ],
-  //   );
-  // }
 
   Widget _buildNewsListView(List<Article> articleList) {
     return ListView.builder(
@@ -158,40 +98,34 @@ class _NewsScreenState extends State<NewsScreen> {
         elevation: 4,
         child: Padding(
           padding: EdgeInsets.all(8),
-          child: Row(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(
-                height: 80,
-                width: 80,
+                height: 180,
+                width: double.infinity,
                 child: Image.network(
                   article.urlToImage ?? "",
-                  fit: BoxFit.fitHeight,
+                  fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) {
                     return const Icon(Icons.image_not_supported);
                   },
                 ),
               ),
-              const SizedBox(width: 20),
-              Expanded(
-                  child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    article.title!,
-                    maxLines: 2,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                    ),
-                  ),
-                  Text(
-                    article.source.name!,
-                    style: const TextStyle(color: Colors.grey),
-                  ),
-                ],
-              ))
+              const SizedBox(height: 10),
+              Text(
+                article.title!,
+                maxLines: 2,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+              ),
+              const SizedBox(height: 5),
+              Text(
+                article.source.name!,
+                style: const TextStyle(color: Colors.grey),
+              ),
             ],
           ),
         ),
@@ -214,11 +148,12 @@ class _NewsScreenState extends State<NewsScreen> {
                 });
               },
               style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.all<Color>(
-                categoryItems[index] == selectedCategory
-                    ? Colors.green.withOpacity(0.5)
-                    : Colors.green,
-              )),
+                backgroundColor: MaterialStateProperty.all<Color>(
+                  categoryItems[index] == selectedCategory
+                      ? Colors.green.withOpacity(0.5)
+                      : Colors.green,
+                ),
+              ),
               child: Text(categoryItems[index]),
             ),
           );

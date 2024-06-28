@@ -4,28 +4,29 @@ import 'package:sports_project/component/other_component.dart';
 import 'package:sports_project/layout/cubit/cubit.dart';
 import 'package:sports_project/layout/cubit/states.dart';
 import 'package:sports_project/models/post_model.dart';
+import 'package:sports_project/models/user_model.dart';
 import 'package:sports_project/pages/comments/comments_screen.dart';
+import 'package:sports_project/pages/home/image_full_screen.dart';
+import 'package:sports_project/pages/home/video_full_screen.dart';
+import 'package:sports_project/pages/user_profile_page/user_profile_screen.dart';
 import 'package:video_player/video_player.dart';
 
 class HomeScreen extends StatelessWidget {
-
-  var likes;
-
   @override
   Widget build(BuildContext context) {
-
     return BlocConsumer<ProjectCubit, ProjectStates>(
-      listener: (context, state) {
-        if(state is ProjectGetLikesSuccessState) likes++;
-      },
+      listener: (context, state) {},
       builder: (context, state) {
         var postModel = ProjectCubit.get(context).postModel;
         return ListView.separated(
           physics: BouncingScrollPhysics(),
           itemBuilder: (context, index) {
             final post = postModel[index];
+            String postUid = postModel[index].uid as String;
+           ProjectCubit.get(context).getSpecificUser(postUid);
+            UserModel postUser = ProjectCubit.get(context).specificUserModel!;
             final postId = ProjectCubit.get(context).postId![index];
-            return buildPostItem(context, post, index, postId);
+            return buildPostItem(context, post, index, postId,postUser);
           },
           separatorBuilder: (context, index) => SizedBox(height: 10),
           itemCount: postModel.length,
@@ -34,12 +35,13 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget buildPostItem(BuildContext context, PostModel model, int index, String postId) {
+  Widget buildPostItem(BuildContext context, PostModel model, int index, String postId,UserModel user) {
     if (model.postVideo != null && model.postVideo!.isNotEmpty) {
       ProjectCubit.get(context).initializeVideoController(postId, model.postVideo!);
     }
+    int likes = ProjectCubit.get(context).likes[index];
+    ProjectCubit.get(context).getSpecificUser(postId);
 
-    likes = ProjectCubit.get(context).likes[index];
     return AnimatedContainer(
       duration: Duration(milliseconds: 300),
       curve: Curves.easeInOut,
@@ -61,32 +63,37 @@ class HomeScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                CircleAvatar(
-                  radius: 25,
-                  backgroundImage: NetworkImage('${model.image}'),
-                ),
-                SizedBox(width: 15),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '${model.name}',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                      Text(
-                        '${model.dateTime}',
-                        style: Theme.of(context).textTheme.caption,
-                      ),
-                    ],
+            InkWell(
+              onTap:() {
+                navigateTo(context, UsersProfileScreen(model:user ));
+              },
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 25,
+                    backgroundImage: NetworkImage('${model.image}'),
                   ),
-                ),
-              ],
+                  SizedBox(width: 15),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${model.name}',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        Text(
+                          '${model.dateTime}',
+                          style: Theme.of(context).textTheme.caption,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
             SizedBox(height: 10),
             Text(
@@ -94,18 +101,27 @@ class HomeScreen extends StatelessWidget {
               style: Theme.of(context).textTheme.subtitle1,
             ),
             if (model.postImage != '')
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 15),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8.0),
-                  child: Image.network(
-                    '${model.postImage}',
-                    width: double.infinity,
-                    height: 200,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return SizedBox.shrink();
-                    },
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => FullScreenImage(imageUrl: model.postImage!),
+                    ),
+                  );
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8.0),
+                    child: Image.network(
+                      '${model.postImage}',
+                      width: double.infinity,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        return SizedBox.shrink();
+                      },
+                    ),
                   ),
                 ),
               ),
@@ -116,30 +132,40 @@ class HomeScreen extends StatelessWidget {
                   if (controller == null || !controller.value.isInitialized) {
                     return Center(child: CircularProgressIndicator());
                   }
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 15),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8.0),
-                      child: AspectRatio(
-                        aspectRatio: controller.value.aspectRatio,
-                        child: Stack(
-                          alignment: Alignment.bottomCenter,
-                          children: [
-                            VideoPlayer(controller),
-                            VideoProgressIndicator(
-                              controller,
-                              allowScrubbing: true,
-                            ),
-                            IconButton(
-                              onPressed: () {
-                                ProjectCubit.get(context).playPauseVideo(postId);
-                              },
-                              icon: Icon(
-                                controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
-                                color: Colors.white,
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => FullScreenVideo(videoController: controller),
+                        ),
+                      );
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 15),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8.0),
+                        child: AspectRatio(
+                          aspectRatio: controller.value.aspectRatio,
+                          child: Stack(
+                            alignment: Alignment.bottomCenter,
+                            children: [
+                              VideoPlayer(controller),
+                              VideoProgressIndicator(
+                                controller,
+                                allowScrubbing: true,
                               ),
-                            ),
-                          ],
+                              IconButton(
+                                onPressed: () {
+                                  ProjectCubit.get(context).playPauseVideo(postId);
+                                },
+                                icon: Icon(
+                                  controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),

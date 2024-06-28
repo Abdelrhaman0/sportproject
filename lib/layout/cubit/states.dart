@@ -154,6 +154,12 @@ class UnfollowErrorState extends ProjectStates {}
 
 class FollowersLoadedState extends ProjectStates {}
 
+class ProjectYourFitState extends ProjectStates{}
+
+class ProjectGetSpecificUserSuccessState extends ProjectStates{}
+
+class ProjectGetSpecificUserErrorState extends ProjectStates{}
+
 class FollowingLoadedState extends ProjectStates {}
 
 class GetFollowingUsersSuccessState extends ProjectStates{}

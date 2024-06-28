@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:sports_project/ML_model/model.dart';
 import 'package:sports_project/component/conest.dart';
 import 'package:sports_project/layout/cubit/cubit.dart';
 import 'package:sports_project/layout/cubit/states.dart';
@@ -13,8 +14,8 @@ class ProjectLayout extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocConsumer<ProjectCubit, ProjectStates>(
       listener: (context, state) {
-        if (state is ProjectAddPostState) {
-          Navigator.pushNamed(context, AddPostScreen.id);
+        if (state is ProjectYourFitState) {
+          Navigator.pushNamed(context, HealthMetricsScreen.id);
         }
       },
       builder: (context, state) {
@@ -93,8 +94,8 @@ class ProjectLayout extends StatelessWidget {
                     label: 'News',
                   ),
                   BottomNavigationBarItem(
-                    icon: Icon(Icons.add_box_outlined),
-                    label: 'Posts',
+                    icon: Icon(Icons.live_help_outlined),
+                    label: 'Your Fit',
                   ),
                   BottomNavigationBarItem(
                     icon: Icon(Icons.chat_outlined),

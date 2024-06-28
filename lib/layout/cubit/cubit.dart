@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:sports_project/DatabaseMethods.dart';
+import 'package:sports_project/ML_model/model.dart';
 import 'package:sports_project/component/conest.dart';
 import 'package:sports_project/component/shared/cache_helper.dart';
 import 'package:sports_project/layout/cubit/states.dart';
@@ -45,6 +46,17 @@ class ProjectCubit extends Cubit<ProjectStates> {
     });
   }
 
+  UserModel? specificUserModel;
+
+  Future<void> getSpecificUser(String userId)  async{
+    try {
+      var userDoc = await FirebaseFirestore.instance.collection('users').doc(userId).get();
+      specificUserModel = UserModel.fromJson(userDoc.data() as Map<String, dynamic>);
+    } catch (error) {
+      print(error);
+    }
+  }
+
   List<PostModel> postModel = [];
   List<PostModel> userPostModel = [];
 
@@ -53,19 +65,19 @@ class ProjectCubit extends Cubit<ProjectStates> {
   List<Widget> screens = [
     HomeScreen(),
     NewsScreen(),
-    AddPostScreen(),
+    HealthMetricsScreen(),
     ChatsScreen(),
     ProfileScreen(),
   ];
 
-  List<String> title = ['Home', 'News', 'Posts', 'Chats', 'Profile'];
+  List<String> title = ['Home', 'News', 'Your Fit', 'Chats', 'Profile'];
 
   void changeBottomNav(int index) {
     if (index == 0 && postModel == null) {
       getPost();
     }
     if (index == 2) {
-      emit(ProjectAddPostState());
+      emit(ProjectYourFitState());
     } else {
       currentIndex = index;
       emit(ProjectChangeBottomNavState());
@@ -335,15 +347,6 @@ class ProjectCubit extends Cubit<ProjectStates> {
     });
   }
 
-  void addPostLocally(PostModel newPost, String newPostId) {
-    postModel.insert(
-        0, newPost); // Insert new post at the beginning of the list
-    likes.insert(0, 0); // Initialize likes count for the new post
-    postId.insert(0, newPostId); // Add the new post ID
-
-    emit(
-        ProjectCreatePostSuccessState()); // Emit state to indicate post creation success
-  }
 
   void getUserPost(String userId) {
     FirebaseFirestore.instance
@@ -471,15 +474,20 @@ class ProjectCubit extends Cubit<ProjectStates> {
     }
   }
 
-  void sendMassage(
-      {required String? text,
-      required String? receiverId,
-      required String? dateTime}) {
+  void sendMassage({
+    required String? text,
+    required String? receiverId,
+    required String? dateTime,
+    required String? imageUrl,
+    required String videoUrl,
+  }) {
     MassageModel model = MassageModel(
       text: text,
       senderId: userModel!.uid,
       receiverId: receiverId,
       dateTime: dateTime,
+      imageUrl: imageUrl,
+      videoUrl: videoUrl,
     );
 
     // set my chats
@@ -532,7 +540,6 @@ class ProjectCubit extends Cubit<ProjectStates> {
       emit(ProjectGetMassageSuccessState());
     });
   }
-
   void singOut() async {
     emit(ProjectSignOutLoadingState());
     await FirebaseAuth.instance.signOut();
@@ -550,8 +557,8 @@ class ProjectCubit extends Cubit<ProjectStates> {
     return FirebaseAuth.instance.currentUser;
   }
 
-  List<UserModel> followersList = [];
-  List<UserModel> followingList = [];
+  List<UserModel> currentUserFollowers = [];
+  List<UserModel> currentUserFollowing = [];
   List<UserModel> otherUserFollowers = [];
   List<UserModel> otherUserFollowing = [];
 
@@ -568,7 +575,7 @@ class ProjectCubit extends Cubit<ProjectStates> {
         // Update target user's followers list
         await userToFollowDoc.collection('followers').doc(currentUser.uid).set({});
 
-        followingList.add(UserModel(uid: userToFollowId)); // Assuming UserModel has a constructor accepting only uid
+        currentUserFollowing.add(UserModel(uid: userToFollowId)); // Assuming UserModel has a constructor accepting only uid
         emit(FollowSuccessState());
         await getFollowerUsers(userToFollowId, forCurrentUser: false);
         await getFollowingUsers(currentUser.uid, forCurrentUser: true);
@@ -594,7 +601,7 @@ class ProjectCubit extends Cubit<ProjectStates> {
         // Remove from target user's followers list
         await userToUnfollowDoc.collection('followers').doc(currentUser.uid).delete();
 
-        followingList.removeWhere((user) => user.uid == userToUnfollowId);
+        currentUserFollowing.removeWhere((user) => user.uid == userToUnfollowId);
         emit(UnfollowSuccessState());
         await getFollowerUsers(userToUnfollowId, forCurrentUser: false);
         await getFollowingUsers(currentUser.uid, forCurrentUser: true);
@@ -620,7 +627,7 @@ class ProjectCubit extends Cubit<ProjectStates> {
           .toList();
 
       if (forCurrentUser) {
-        followersList = followersList;
+        currentUserFollowers = followersList;
       } else {
         otherUserFollowers = followersList;
       }
@@ -645,7 +652,7 @@ class ProjectCubit extends Cubit<ProjectStates> {
           .toList();
 
       if (forCurrentUser) {
-        followingList = followingList;
+        currentUserFollowing = followingList;
       } else {
         otherUserFollowing = followingList;
       }
@@ -695,37 +702,6 @@ class ProjectCubit extends Cubit<ProjectStates> {
     emit(ProjectInitialState());
   }
 
-  // // Fetch follower and following counts
-  // int followerCount = 0;
-  // int followingCount = 0;
-  //
-  // void getFollowerCount(String userId) {
-  //   FirebaseFirestore.instance.collection('users').doc(userId).collection('followers').get().then((value) {
-  //     followerCount = value.docs.length;
-  //     print(followerCount);
-  //   }).catchError((e) {
-  //     print(e);
-  //     emit(FollowErrorState());
-  //   });
-  // }
-  //
-  // void getFollowingCount(String userId) {
-  //   FirebaseFirestore.instance.collection('users').doc(userId).collection('following').get().then((value) {
-  //     followingCount = value.docs.length;
-  //     print(followingCount);
-  //   }).catchError((e) {
-  //     print(e);
-  //     emit(FollowErrorState());
-  //   });
-  // }
-
-  // Fetch followers and following lists
-
-
-  // void updateFollowingCounts(String userId) {
-  //   getFollowerCount(userId);
-  //   getFollowingCount(userId);
-  // }
 
   }
 
