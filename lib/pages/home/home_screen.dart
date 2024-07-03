@@ -15,7 +15,11 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<ProjectCubit, ProjectStates>(
-      listener: (context, state) {},
+      listener: (context, state) {
+        if (state is ProjectGetLikesSuccessState || state is ProjectUnlikePostSuccessState) {
+          // Handle any specific logic for like/unlike success if needed
+        }
+      },
       builder: (context, state) {
         var postModel = ProjectCubit.get(context).postModel;
         return ListView.separated(
@@ -23,10 +27,10 @@ class HomeScreen extends StatelessWidget {
           itemBuilder: (context, index) {
             final post = postModel[index];
             String postUid = postModel[index].uid as String;
-           ProjectCubit.get(context).getSpecificUser(postUid);
-            UserModel postUser = ProjectCubit.get(context).specificUserModel!;
+            ProjectCubit.get(context).getSpecificUser(postUid);
+            UserModel? postUser = ProjectCubit.get(context).specificUserModel;
             final postId = ProjectCubit.get(context).postId![index];
-            return buildPostItem(context, post, index, postId,postUser);
+            return buildPostItem(context, post, index, postId, postUser!);
           },
           separatorBuilder: (context, index) => SizedBox(height: 10),
           itemCount: postModel.length,
@@ -35,12 +39,12 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget buildPostItem(BuildContext context, PostModel model, int index, String postId,UserModel user) {
+  Widget buildPostItem(BuildContext context, PostModel model, int index, String postId, UserModel user) {
     if (model.postVideo != null && model.postVideo!.isNotEmpty) {
       ProjectCubit.get(context).initializeVideoController(postId, model.postVideo!);
     }
     int likes = ProjectCubit.get(context).likes[index];
-    ProjectCubit.get(context).getSpecificUser(postId);
+    bool isLiked = ProjectCubit.get(context).likedPosts.contains(postId);
 
     return AnimatedContainer(
       duration: Duration(milliseconds: 300),
@@ -64,8 +68,8 @@ class HomeScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             InkWell(
-              onTap:() {
-                navigateTo(context, UsersProfileScreen(model:user ));
+              onTap: () {
+                navigateTo(context, UsersProfileScreen(model: user));
               },
               child: Row(
                 children: [
@@ -204,7 +208,11 @@ class HomeScreen extends StatelessWidget {
                   Expanded(
                     child: InkWell(
                       onTap: () {
-                        ProjectCubit.get(context).getLikes(postId);
+                        if (isLiked) {
+                          ProjectCubit.get(context).unlikePost(postId, index);
+                        } else {
+                          ProjectCubit.get(context).likePost(postId, index);
+                        }
                       },
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 5),
@@ -212,9 +220,9 @@ class HomeScreen extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
                             Icon(
-                              Icons.favorite_border,
+                              isLiked ? Icons.favorite : Icons.favorite_border,
                               size: 18,
-                              color: Colors.red,
+                              color: isLiked ? Theme.of(context).primaryColor : Colors.red,
                             ),
                             SizedBox(width: 5),
                             Text(

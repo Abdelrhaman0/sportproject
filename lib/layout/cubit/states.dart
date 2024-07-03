@@ -169,3 +169,11 @@ class GetFollowingUsersErrorState extends  ProjectStates{}
 class GetFollowersUsersSuccessState extends ProjectStates{}
 
 class GetFollowersUsersErrorState extends ProjectStates{}
+
+class ProjectUnlikePostSuccessState extends ProjectStates{}
+
+class ProjectUnlikePostErrorState extends ProjectStates{}
+
+class ProjectGetAllUserIdsSuccessState extends ProjectStates{}
+
+class ProjectGetAllUserIdsErrorState extends ProjectStates{}
