@@ -378,7 +378,7 @@ class UsersProfileScreen extends StatelessWidget {
                     Expanded(
                       child: InkWell(
                         onTap: () {
-                          ProjectCubit.get(context).getLikes(postId);
+                          ProjectCubit.get(context).likePost(postId, index);
                         },
                         child: Padding(
                           padding: const EdgeInsets.symmetric(vertical: 5),

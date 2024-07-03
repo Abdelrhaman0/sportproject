@@ -10,19 +10,20 @@ import 'package:sports_project/layout/cubit/states.dart';
 import 'package:sports_project/pages/login_page/login_page.dart';
 
 class SettingScreen extends StatelessWidget {
-
-
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<ProjectCubit, ProjectStates>(
       listener: (context, state) {
-          if(state is ProjectSignOutSuccessState){
-            Navigator.pushNamedAndRemoveUntil(
-                context, LoginPage.id, (route) => false);
-          }
+        if (state is ProjectSignOutSuccessState) {
+          Navigator.pushNamedAndRemoveUntil(
+              context, LoginPage.id, (route) => false);
+        } else if (state is ProjectSignOutErrorState) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error signing out. Please try again.')),
+          );
+        }
       },
       builder: (context, state) {
-
         var nameController = TextEditingController();
         var bioController = TextEditingController();
         var phoneController = TextEditingController();
@@ -50,7 +51,10 @@ class SettingScreen extends StatelessWidget {
             actions: [
               TextButton(
                 onPressed: () {
-                  ProjectCubit.get(context).updateUser(name: nameController.text, bio: bioController.text, phone: phoneController.text);
+                  ProjectCubit.get(context).updateUser(
+                      name: nameController.text,
+                      bio: bioController.text,
+                      phone: phoneController.text);
                 },
                 child: Text('Update'),
               ),
@@ -61,13 +65,14 @@ class SettingScreen extends StatelessWidget {
               padding: const EdgeInsets.all(8.0),
               child: Column(
                 children: [
-                  if(state is ProjectUploadUserLoadingState)
+                  if (state is ProjectUploadUserLoadingState)
                     LinearProgressIndicator(),
-                  if(state is ProjectUploadUserLoadingState)
+                  if (state is ProjectUploadUserLoadingState)
                     SizedBox(
                       height: 10,
                     ),
-                  Container(
+                  AnimatedContainer(
+                    duration: Duration(milliseconds: 500),
                     height: 180,
                     child: Stack(
                       alignment: Alignment.bottomLeft,
@@ -79,8 +84,7 @@ class SettingScreen extends StatelessWidget {
                             children: [
                               CircleAvatar(
                                   radius: 75,
-                                  backgroundImage: profileBackground
-                              ),
+                                  backgroundImage: profileBackground),
                               IconButton(
                                 onPressed: () {
                                   ProjectCubit.get(context).getProfileImage();
@@ -99,91 +103,99 @@ class SettingScreen extends StatelessWidget {
                   SizedBox(
                     height: 20,
                   ),
-                  // if(ProjectCubit.get(context).profileImage != null || ProjectCubit.get(context).coverImage != null )
-                    Row(
-                      children: [
-                        if(ProjectCubit.get(context).profileImage != null)
-                          Expanded(child:   Column(
-                            children: [
-                              Container(
-                                width: double.infinity,
-                                height: 40.0,
-                                child: MaterialButton(
-                                  onPressed: (){
-                                    ProjectCubit.get(context).uploadProfileImage(name: nameController.text, bio: bioController.text, phone: phoneController.text);
-                                  },
-                                  child: Text(
-                                    'upload profile'.toUpperCase(),
-                                    style: TextStyle(
-                                      color: Colors.white,
+                  Row(
+                    children: [
+                      if (ProjectCubit.get(context).profileImage != null)
+                        Expanded(
+                            child: Column(
+                              children: [
+                                Container(
+                                  width: double.infinity,
+                                  height: 40.0,
+                                  child: MaterialButton(
+                                    onPressed: () {
+                                      ProjectCubit.get(context).uploadProfileImage(
+                                          name: nameController.text,
+                                          bio: bioController.text,
+                                          phone: phoneController.text);
+                                    },
+                                    child: Text(
+                                      'upload profile'.toUpperCase(),
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                      ),
                                     ),
                                   ),
-                                ),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(
-                                    3,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(3),
+                                    color: kPrimaryColor,
                                   ),
-                                  color: kPrimaryColor,
                                 ),
-                              ),
-                              // SizedBox(height: 5 ,),
-                              // LinearProgressIndicator(),
-                            ],
-                          )),
-
-
-                      ],
-                    ),
+                              ],
+                            )),
+                    ],
+                  ),
                   SizedBox(
                     height: 20,
                   ),
-                  defaultFormField(
-                    controller: nameController,
-                    type: TextInputType.text,
-                    validate: (String? value) {
-                      if (value == null || value.isEmpty) {
-                        return 'The name must not be empty';
-                      } else {
-                        return null;
-                      }
-                    },
-                    label: 'Name',
-                    prefix: Icons.person,
+                  AnimatedOpacity(
+                    opacity: 1.0,
+                    duration: Duration(milliseconds: 500),
+                    child: defaultFormField(
+                      controller: nameController,
+                      type: TextInputType.text,
+                      validate: (String? value) {
+                        if (value == null || value.isEmpty) {
+                          return 'The name must not be empty';
+                        } else {
+                          return null;
+                        }
+                      },
+                      label: 'Name',
+                      prefix: Icons.person,
+                    ),
                   ),
                   SizedBox(
                     height: 15,
                   ),
-                  defaultFormField(
-                    controller: bioController,
-                    type: TextInputType.text,
-                    validate: (String? value) {},
-                    label: 'Bio',
-                    prefix: Icons.info,
+                  AnimatedOpacity(
+                    opacity: 1.0,
+                    duration: Duration(milliseconds: 500),
+                    child: defaultFormField(
+                      controller: bioController,
+                      type: TextInputType.text,
+                      validate: (String? value) {},
+                      label: 'Bio',
+                      prefix: Icons.info,
+                    ),
                   ),
                   SizedBox(
                     height: 15,
                   ),
-                  defaultFormField(
-                    controller: phoneController,
-                    type: TextInputType.phone,
-                    validate: (String? value) {
-                      if (value == null || value.isEmpty) {
-                        return 'The phone must not be empty';
-                      } else {
-                        return null;
-                      }
-                    },
-                    label: 'Phone',
-                    prefix: Icons.phone,
+                  AnimatedOpacity(
+                    opacity: 1.0,
+                    duration: Duration(milliseconds: 500),
+                    child: defaultFormField(
+                      controller: phoneController,
+                      type: TextInputType.phone,
+                      validate: (String? value) {
+                        if (value == null || value.isEmpty) {
+                          return 'The phone must not be empty';
+                        } else {
+                          return null;
+                        }
+                      },
+                      label: 'Phone',
+                      prefix: Icons.phone,
+                    ),
                   ),
                   SizedBox(
                     height: 40,
                   ),
                   DefaultButton(
-                      label: 'Log out',
-                    onTap: (){
-                        ProjectCubit.get(context).singOut();
-
+                    label: 'Log out',
+                    onTap: () {
+                      ProjectCubit.get(context).signOut();
                     },
                     buttonColor: kPrimaryColor,
                   )

@@ -1,3 +1,4 @@
+import 'package:conditional_builder_null_safety/conditional_builder_null_safety.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -26,7 +27,7 @@ class RegisterPage extends StatelessWidget {
       create: (BuildContext context) => RegisterCubit(),
       child: BlocConsumer<RegisterCubit, RegisterStates>(
         listener: (context, state) {
-          if(state is CreateUserErrorState){
+          if (state is CreateUserErrorState) {
             Fluttertoast.showToast(
               msg: state.error,
               backgroundColor: Colors.grey,
@@ -112,14 +113,19 @@ class RegisterPage extends StatelessWidget {
                         style: TextStyle(color: Colors.black),
                         obscureText: RegisterCubit.get(context).isPassword,
                         decoration: InputDecoration(
-                          border:OutlineInputBorder(
-                            borderSide: BorderSide(color:kPrimaryColor),
-                            borderRadius: BorderRadius.circular(20),),
+                          border: OutlineInputBorder(
+                            borderSide: BorderSide(color: kPrimaryColor),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
                           prefixIcon: Icon(
-                            Icons.key_outlined,color: kPrimaryColor,
+                            Icons.key_outlined,
+                            color: kPrimaryColor,
                           ),
                           suffixIcon: IconButton(
-                            icon: Icon(RegisterCubit.get(context).suffix,color: Colors.grey,),
+                            icon: Icon(
+                              RegisterCubit.get(context).suffix,
+                              color: Colors.grey,
+                            ),
                             onPressed: () {
                               RegisterCubit.get(context)
                                   .changePasswordVisibility();
@@ -128,8 +134,8 @@ class RegisterPage extends StatelessWidget {
                           hintText: 'Password',
                           hintStyle: TextStyle(color: Colors.grey),
                         ),
-                        validator: (value){
-                          if(value!.isEmpty) {
+                        validator: (value) {
+                          if (value!.isEmpty) {
                             return 'password must be not empty';
                           }
                         },
@@ -137,20 +143,28 @@ class RegisterPage extends StatelessWidget {
                       SizedBox(
                         height: 30,
                       ),
-                      DefaultButton(
-                        label: 'Sign Up',
-                        onTap: () {
-                          if (formKey.currentState!.validate()) {
-                            RegisterCubit.get(context).userRegister(
-                                email: emailController.text,
-                                name: nameController.text,
-                                phone: phoneController.text,
-                                password: passwordController.text);
-                          }
-                        },
-                        buttonColor: kPrimaryColor,
-                      ),
-
+                      ConditionalBuilder(
+                          condition: state is! RegisterLoadingState,
+                          builder: (BuildContext context) => Container(
+                                decoration: BoxDecoration(
+                                  color: kPrimaryColor,
+                                ),
+                                alignment: AlignmentDirectional.center,
+                                child: DefaultButton(
+                                  label: 'Sign Up',
+                                  onTap: () {
+                                    if (formKey.currentState!.validate()) {
+                                      RegisterCubit.get(context).userRegister(
+                                          email: emailController.text,
+                                          name: nameController.text,
+                                          phone: phoneController.text,
+                                          password: passwordController.text);
+                                    }
+                                  },
+                                  buttonColor: kPrimaryColor,
+                                ),
+                              ),
+                          fallback: (context) => CircularProgressIndicator()),
                     ],
                   ),
                 ),

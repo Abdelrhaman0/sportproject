@@ -15,7 +15,6 @@ import 'package:sports_project/pages/add_post/add_post_screen.dart';
 import 'package:sports_project/pages/chats/chat_detail.dart';
 import 'package:sports_project/pages/initial_page/initial_page.dart';
 import 'package:sports_project/pages/login_page/login_page.dart';
-import 'package:sports_project/pages/profile/profile_screen.dart';
 import 'package:sports_project/pages/register_page/register_page.dart';
 import 'package:sports_project/pages/search/search_screen.dart';
 
@@ -29,7 +28,6 @@ void main() async {
   await CacheHelper.init();
 
   // Fetch initial data
-  token = CacheHelper.getData(key: 'token');
   uid = CacheHelper.getData(key: 'uid');
 
   Widget projectWidget;

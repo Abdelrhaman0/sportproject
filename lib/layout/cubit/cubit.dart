@@ -9,7 +9,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:sports_project/DatabaseMethods.dart';
 import 'package:sports_project/ML_model/model.dart';
 import 'package:sports_project/component/conest.dart';
 import 'package:sports_project/component/shared/cache_helper.dart';
@@ -20,6 +19,7 @@ import 'package:sports_project/models/post_model.dart';
 import 'package:sports_project/models/user_model.dart';
 import 'package:sports_project/pages/add_post/add_post_screen.dart';
 import 'package:sports_project/pages/chats/chats_screen.dart';
+import 'package:sports_project/pages/chats/encryption_class.dart';
 import 'package:sports_project/pages/home/home_screen.dart';
 import 'package:sports_project/pages/news/news_page.dart';
 import 'package:sports_project/pages/profile/profile_screen.dart';
@@ -441,22 +441,47 @@ class ProjectCubit extends Cubit<ProjectStates> {
     });
   }
 
-  void getLikes(String postId) {
+  Set<String> likedPosts = {};
+
+
+  List<UserModel> users = [];
+
+
+
+
+  void likePost(String postId, int index) {
     FirebaseFirestore.instance
         .collection('posts')
         .doc(postId)
         .collection('likes')
         .doc(userModel!.uid)
         .set({'like': true}).then((value) {
+      // Increase the likes count in the local list and mark the post as liked
+      likes[index] += 1;
+      likedPosts.add(postId);
       emit(ProjectGetLikesSuccessState());
     }).catchError((error) {
       emit(ProjectGetLikesErrorState(error));
     });
   }
 
-  List<UserModel> users = [];
+  void unlikePost(String postId, int index) {
+    FirebaseFirestore.instance
+        .collection('posts')
+        .doc(postId)
+        .collection('likes')
+        .doc(userModel!.uid)
+        .delete().then((value) {
+      // Decrease the likes count in the local list and mark the post as unliked
+      likes[index] -= 1;
+      likedPosts.remove(postId);
+      emit(ProjectUnlikePostSuccessState());
+    }).catchError((error) {
+      emit(ProjectUnlikePostErrorState());
+    });
+  }
 
-  void getUsers() {
+  void getUsers()  {
     if (users.isEmpty) {
       emit(ProjectGetAllUserLoadingState());
       FirebaseFirestore.instance.collection('users').get().then((value) {
@@ -472,26 +497,40 @@ class ProjectCubit extends Cubit<ProjectStates> {
         print(error);
       });
     }
+
   }
+
+  List<MassageModel> massages = [];
 
   void sendMassage({
     required String? text,
     required String? receiverId,
     required String? dateTime,
-    required String? imageUrl,
-    required String videoUrl,
+    Uint8List? imageBytes,
+    Uint8List? videoBytes,
   }) {
+    final encryptedText = EncryptionHelper().encryptText(text ?? '');
+    String? encryptedImage;
+    String? encryptedVideo;
+
+    if (imageBytes != null) {
+      encryptedImage = EncryptionHelper().encryptBytes(imageBytes);
+    }
+
+    if (videoBytes != null) {
+      encryptedVideo = EncryptionHelper().encryptBytes(videoBytes);
+    }
+
     MassageModel model = MassageModel(
-      text: text,
+      text: encryptedText,
       senderId: userModel!.uid,
       receiverId: receiverId,
       dateTime: dateTime,
-      imageUrl: imageUrl,
-      videoUrl: videoUrl,
+      imageUrl: encryptedImage,
+      videoUrl: encryptedVideo,
     );
 
     // set my chats
-
     FirebaseFirestore.instance
         .collection('users')
         .doc(userModel!.uid)
@@ -506,7 +545,6 @@ class ProjectCubit extends Cubit<ProjectStates> {
     });
 
     // set receiver Chats
-
     FirebaseFirestore.instance
         .collection('users')
         .doc(receiverId)
@@ -521,8 +559,6 @@ class ProjectCubit extends Cubit<ProjectStates> {
     });
   }
 
-  List<MassageModel> massages = [];
-
   void getMassage({required String? receiverId}) {
     FirebaseFirestore.instance
         .collection('users')
@@ -535,19 +571,41 @@ class ProjectCubit extends Cubit<ProjectStates> {
         .listen((event) {
       massages = [];
       for (var element in event.docs) {
-        massages.add(MassageModel.formJson(element.data()));
+        var encryptedMessage = MassageModel.fromJson(element.data());
+        encryptedMessage.text = EncryptionHelper().decryptText(encryptedMessage.text ?? '');
+        if (encryptedMessage.imageUrl != null && encryptedMessage.imageUrl!.isNotEmpty) {
+          encryptedMessage.imageBytes = EncryptionHelper().decryptBytes(encryptedMessage.imageUrl!);
+        }
+        if (encryptedMessage.videoUrl != null && encryptedMessage.videoUrl!.isNotEmpty) {
+          encryptedMessage.videoBytes = EncryptionHelper().decryptBytes(encryptedMessage.videoUrl!);
+        }
+        massages.add(encryptedMessage);
       }
       emit(ProjectGetMassageSuccessState());
     });
   }
-  void singOut() async {
+
+
+
+
+
+
+
+
+  void signOut() async {
     emit(ProjectSignOutLoadingState());
-    await FirebaseAuth.instance.signOut();
-    uid = CacheHelper.removeData(key: 'uid')
-            .then((value) => {emit(ProjectSignOutSuccessState())})
-            .catchError(
-                (error) => {emit(ProjectSignOutErrorState()), print(error)})
-        as String?;
+    try {
+      await FirebaseAuth.instance.signOut();
+      bool isRemoved = await CacheHelper.removeData(key: 'uid');
+      if (isRemoved) {
+        emit(ProjectSignOutSuccessState());
+      } else {
+        emit(ProjectSignOutErrorState());
+      }
+    } catch (error) {
+      emit(ProjectSignOutErrorState());
+      print(error);
+    }
   }
 
 

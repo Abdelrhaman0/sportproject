@@ -32,7 +32,7 @@ class _NewsScreenState extends State<NewsScreen> {
   Future<List<Article>> getNewsData() async {
     NewsAPI newsAPI = NewsAPI("f0382504da8c4ef8b8270c194a244656");
     return await newsAPI.getTopHeadlines(
-      country: "us",
+      country: "eg",
       query: searchTerm,
       category: selectedCategory,
       pageSize: 50,
