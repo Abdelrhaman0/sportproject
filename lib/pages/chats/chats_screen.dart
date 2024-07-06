@@ -29,29 +29,32 @@ class ChatsScreen extends StatelessWidget {
     );
   }
 
-  Widget chatItemBuilder(UserModel model,context) => InkWell(
-    onTap: (){navigateTo(context, ChatDetailsScreen(userModel: model,));},
-    child: Padding(
-      padding: const EdgeInsets.all(15.0),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 30,
-            backgroundImage: NetworkImage(
-                '${model.image}'),
-          ),
-          SizedBox(
-            width: 15,
-          ),
-          Text(
-            '${model.name}',
-            style: TextStyle(
-              height: 1.4,
+  Widget chatItemBuilder(UserModel model,context) {
+    return InkWell(
+      onTap: () {
+        navigateTo(context, ChatDetailsScreen(userModel: model,));
+      },
+      child: Padding(
+        padding: const EdgeInsets.all(15.0),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 30,
+              backgroundImage: NetworkImage(
+                  '${model.image}'),
             ),
-          ),
-        ],
+            SizedBox(
+              width: 15,
+            ),
+            Text(
+              '${model.name}',
+              style: TextStyle(
+                height: 1.4,
+              ),
+            ),
+          ],
+        ),
       ),
-    ),
-  );
-
+    );
+  }
 }

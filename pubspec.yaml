@@ -62,6 +62,19 @@ dependencies:
   rxdart: ^0.27.2
   encrypt: ^5.0.0
   crypto: ^3.0.0
+  flutter_form_builder:
+  form_builder_validators:
+  flutter_context_dtx:
+  tflite_flutter:
+  provider:
+  flutter_spinkit:
+  dropdown_button2:
+  animations:
+  animator:
+  animated_text_kit:
+  typewritertext:
+  flutter_pdfview:
+  syncfusion_flutter_pdfviewer:
 
 
 dev_dependencies:
@@ -89,6 +102,30 @@ flutter:
 
   assets:
     - assets/image/
+    - images/min-football.png
+    - images/nutes-removebg-preview.png
+    - images/toast-removebg-preview.png
+    - images/urgent-removebg-preview.png
+    - images/DSC_0276-removebg-preview.png
+    - images/grilled_chicken-removebg-preview.png
+    - images/vegetable-curry-with-rice-removebg-preview.png
+    - images/curry.png
+    - images/Sheet-Pan-Tofu-and-Broccoli-Teriyaki-removebg-preview.png
+    - images/salamon-removebg-preview.png
+    - images/dietplane-removebg-preview.png
+    - images/R.png
+    - images/R (1).png
+    - images/background.jpg
+    - images/Lean-Protein-Sources-530x377.jpg
+    - images/Caffeine_share.jpg
+    - images/fats-and-oil-in-food.jpg
+    - images/lower_sodium_intake.jpg
+    - images/blood-pressure-monitor-cuff-1.jpg
+    - images/managr_stress.jpg
+    - images/stay_active.jpg
+    - images/quit-smoking.jpg
+    - images/background111.png
+    - images/simplebackground.jpg
 
 
   fonts:

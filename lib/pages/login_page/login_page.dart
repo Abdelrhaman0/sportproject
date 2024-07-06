@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -6,6 +7,8 @@ import 'package:sports_project/component/default_button.dart';
 import 'package:sports_project/component/default_text_field.dart';
 import 'package:sports_project/component/other_component.dart';
 import 'package:sports_project/component/shared/cache_helper.dart';
+import 'package:sports_project/layout/cubit/cubit.dart';
+import 'package:sports_project/layout/cubit/verifcation_page.dart';
 import 'package:sports_project/layout/project_layout.dart';
 import 'package:sports_project/pages/login_page/cubit/cubit.dart';
 import 'package:sports_project/pages/login_page/cubit/states.dart';
@@ -29,11 +32,12 @@ class LoginPage extends StatelessWidget {
       child: BlocConsumer<LoginCubit, LoginStates>(
         listener: (context, state) {
           if (state is LoginErrorState) {
+            String errorMessage = _parseFirebaseError(state.error);
             Fluttertoast.showToast(
-              msg: state.error,
-              backgroundColor: Colors.grey,
+              msg: errorMessage,
+              backgroundColor: Colors.redAccent,
               textColor: Colors.white,
-              toastLength: Toast.LENGTH_SHORT,
+              toastLength: Toast.LENGTH_LONG,
               gravity: ToastGravity.BOTTOM,
               timeInSecForIosWeb: 1,
               fontSize: 16,
@@ -41,8 +45,12 @@ class LoginPage extends StatelessWidget {
           }
           if (state is LoginSuccessState) {
             CacheHelper.saveData(key: 'uid', value: state.uid).then((value) {
-              Navigator.pushNamedAndRemoveUntil(
-                  context, ProjectLayout.id, (route) => false);
+              if(FirebaseAuth.instance.currentUser!.emailVerified) {
+                Navigator.pushNamedAndRemoveUntil(
+                    context, ProjectLayout.id, (route) => false);
+              } else {
+                navigateTo(context, VerifcationScreen());
+              }
             });
           }
         },
@@ -52,12 +60,12 @@ class LoginPage extends StatelessWidget {
               child: Form(
                 key: formKey,
                 child: Padding(
-                  padding: const EdgeInsets.all(8.0),
+                  padding: const EdgeInsets.all(16.0),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       SizedBox(
-                        height: 200,
+                        height: 150,
                       ),
                       Text(
                         'SPORTS',
@@ -116,8 +124,9 @@ class LoginPage extends StatelessWidget {
                         ),
                         validator: (value) {
                           if (value!.isEmpty) {
-                            return 'password must be not empty';
+                            return 'Password must not be empty';
                           }
+                          return null;
                         },
                       ),
                       SizedBox(
@@ -161,7 +170,7 @@ class LoginPage extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            'Don\'t have account?  ',
+                            'Don\'t have an account? ',
                             style: TextStyle(
                               color: Colors.black,
                             ),
@@ -186,5 +195,19 @@ class LoginPage extends StatelessWidget {
         },
       ),
     );
+  }
+
+  String _parseFirebaseError(String error) {
+    if (error.contains('invalid-email')) {
+      return 'The email address is badly formatted.';
+    } else if (error.contains('user-not-found')) {
+      return 'No user found for that email.';
+    } else if (error.contains('wrong-password')) {
+      return 'Wrong password provided.';
+    } else if (error.contains('user-disabled')) {
+      return 'This user has been disabled.';
+    } else {
+      return 'An unexpected error occurred. Please try again.';
+    }
   }
 }

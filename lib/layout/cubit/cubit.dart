@@ -1,11 +1,10 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:bloc/bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
@@ -17,7 +16,6 @@ import 'package:sports_project/models/comment_model.dart';
 import 'package:sports_project/models/message_model.dart';
 import 'package:sports_project/models/post_model.dart';
 import 'package:sports_project/models/user_model.dart';
-import 'package:sports_project/pages/add_post/add_post_screen.dart';
 import 'package:sports_project/pages/chats/chats_screen.dart';
 import 'package:sports_project/pages/chats/encryption_class.dart';
 import 'package:sports_project/pages/home/home_screen.dart';
@@ -500,34 +498,26 @@ class ProjectCubit extends Cubit<ProjectStates> {
 
   }
 
-  List<MassageModel> massages = [];
 
   void sendMassage({
     required String? text,
     required String? receiverId,
     required String? dateTime,
-    Uint8List? imageBytes,
-    Uint8List? videoBytes,
+    required String? imageUrl,
+    required String videoUrl,
   }) {
-    final encryptedText = EncryptionHelper().encryptText(text ?? '');
-    String? encryptedImage;
-    String? encryptedVideo;
+    EncryptionHelper encryptionHelper = EncryptionHelper();
 
-    if (imageBytes != null) {
-      encryptedImage = EncryptionHelper().encryptBytes(imageBytes);
-    }
-
-    if (videoBytes != null) {
-      encryptedVideo = EncryptionHelper().encryptBytes(videoBytes);
-    }
+    // Encrypt the text if it is not empty
+    String? encryptedText = text?.isNotEmpty == true ? encryptionHelper.encryptText(text!) : text;
 
     MassageModel model = MassageModel(
       text: encryptedText,
       senderId: userModel!.uid,
       receiverId: receiverId,
       dateTime: dateTime,
-      imageUrl: encryptedImage,
-      videoUrl: encryptedVideo,
+      imageUrl: imageUrl,
+      videoUrl: videoUrl,
     );
 
     // set my chats
@@ -559,7 +549,11 @@ class ProjectCubit extends Cubit<ProjectStates> {
     });
   }
 
+  List<MassageModel> massages = [];
+
   void getMassage({required String? receiverId}) {
+    EncryptionHelper encryptionHelper = EncryptionHelper();
+
     FirebaseFirestore.instance
         .collection('users')
         .doc(userModel!.uid)
@@ -571,23 +565,18 @@ class ProjectCubit extends Cubit<ProjectStates> {
         .listen((event) {
       massages = [];
       for (var element in event.docs) {
-        var encryptedMessage = MassageModel.fromJson(element.data());
-        encryptedMessage.text = EncryptionHelper().decryptText(encryptedMessage.text ?? '');
-        if (encryptedMessage.imageUrl != null && encryptedMessage.imageUrl!.isNotEmpty) {
-          encryptedMessage.imageBytes = EncryptionHelper().decryptBytes(encryptedMessage.imageUrl!);
+        MassageModel model = MassageModel.formJson(element.data());
+
+        // Decrypt the text if it is not empty
+        if (model.text != null && model.text!.isNotEmpty) {
+          model.text = encryptionHelper.decryptText(model.text!);
         }
-        if (encryptedMessage.videoUrl != null && encryptedMessage.videoUrl!.isNotEmpty) {
-          encryptedMessage.videoBytes = EncryptionHelper().decryptBytes(encryptedMessage.videoUrl!);
-        }
-        massages.add(encryptedMessage);
+
+        massages.add(model);
       }
       emit(ProjectGetMassageSuccessState());
     });
   }
-
-
-
-
 
 
 
@@ -761,5 +750,23 @@ class ProjectCubit extends Cubit<ProjectStates> {
   }
 
 
+  Map<String, bool> followingStatus = {};
+
+  void fetchFollowingStatus(String currentUserId, String postUid) async {
+    try {
+      var doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUserId)
+          .collection('following')
+          .doc(postUid)
+          .get();
+      followingStatus[postUid] = doc.exists;
+    } catch (error) {
+      print(error);
+    }
   }
+
+}
+
+
 

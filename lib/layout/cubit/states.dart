@@ -177,3 +177,9 @@ class ProjectUnlikePostErrorState extends ProjectStates{}
 class ProjectGetAllUserIdsSuccessState extends ProjectStates{}
 
 class ProjectGetAllUserIdsErrorState extends ProjectStates{}
+
+class ProjectGetFollowingPostLoadingState extends ProjectStates{}
+
+class ProjectGetFollowingPostSuccessState extends ProjectStates{}
+
+class ProjectGetFollowingPostErrorState extends ProjectStates{}

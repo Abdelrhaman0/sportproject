@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-import 'package:sports_project/component/other_component.dart';
 import 'package:sports_project/layout/cubit/cubit.dart';
 import 'package:sports_project/layout/cubit/states.dart';
 import 'package:sports_project/layout/project_layout.dart';
@@ -109,7 +108,7 @@ class AddPostScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(4),
                           image: DecorationImage(
                               image: FileImage(cubit.postImage as File),
-                              fit: BoxFit.cover),
+                              fit: BoxFit.contain),
                         ),
                       ),
                       IconButton(
@@ -132,12 +131,19 @@ class AddPostScreen extends StatelessWidget {
                     children: [
                       Container(
                         width: double.infinity,
-                        height: 150,
+                        height: 300,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(4),
+                          color: Colors.black,
+                        ),
                         child: FutureBuilder(
                           future: cubit.postVideoController!.initialize(),
                           builder: (context, snapshot) {
                             if (snapshot.connectionState == ConnectionState.done) {
-                              return VideoPlayer(cubit.postVideoController!);
+                              return AspectRatio(
+                                aspectRatio: cubit.postVideoController!.value.aspectRatio,
+                                child: VideoPlayer(cubit.postVideoController!),
+                              );
                             } else {
                               return Center(child: CircularProgressIndicator());
                             }
@@ -156,6 +162,23 @@ class AddPostScreen extends StatelessWidget {
                           ),
                         ),
                       ),
+                      Positioned(
+                        bottom: 10,
+                        right: 10,
+                        child: FloatingActionButton(
+                          mini: true,
+                          onPressed: () {
+                            cubit.postVideoController!.value.isPlaying
+                                ? cubit.postVideoController!.pause()
+                                : cubit.postVideoController!.play();
+                          },
+                          child: Icon(
+                            cubit.postVideoController!.value.isPlaying
+                                ? Icons.pause
+                                : Icons.play_arrow,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 SizedBox(height: 20),
@@ -171,7 +194,7 @@ class AddPostScreen extends StatelessWidget {
                           children: [
                             Icon(Icons.image),
                             SizedBox(width: 5),
-                            Text('add photo'),
+                            Text('Add Photo'),
                           ],
                         ),
                       ),
@@ -186,7 +209,7 @@ class AddPostScreen extends StatelessWidget {
                           children: [
                             Icon(Icons.video_camera_back),
                             SizedBox(width: 5),
-                            Text('add video'),
+                            Text('Add Video'),
                           ],
                         ),
                       ),

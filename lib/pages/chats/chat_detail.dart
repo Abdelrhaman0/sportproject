@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'dart:typed_data';
+
 import 'package:conditional_builder_null_safety/conditional_builder_null_safety.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -10,7 +10,6 @@ import 'package:sports_project/layout/cubit/cubit.dart';
 import 'package:sports_project/layout/cubit/states.dart';
 import 'package:sports_project/models/message_model.dart';
 import 'package:sports_project/models/user_model.dart';
-import 'package:path_provider/path_provider.dart';
 
 class ChatDetailsScreen extends StatefulWidget {
   ChatDetailsScreen({this.userModel});
@@ -123,8 +122,8 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
                                   text: massageController.text,
                                   receiverId: widget.userModel!.uid.toString(),
                                   dateTime: now.toString(),
-                                  imageBytes: null,
-                                  videoBytes: null,
+                                  imageUrl: '',
+                                  videoUrl: '',
                                 );
                                 massageController.clear();
                               },
@@ -153,13 +152,12 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
   Future<void> _pickImage(BuildContext context) async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
     if (image != null) {
-      final bytes = await image.readAsBytes();
       ProjectCubit.get(context).sendMassage(
         text: '',
         receiverId: widget.userModel!.uid,
         dateTime: DateTime.now().toString(),
-        imageBytes: bytes,
-        videoBytes: null,
+        imageUrl: image.path,
+        videoUrl: '',
       );
     }
   }
@@ -167,21 +165,20 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
   Future<void> _pickVideo(BuildContext context) async {
     final XFile? video = await _picker.pickVideo(source: ImageSource.gallery);
     if (video != null) {
-      final bytes = await video.readAsBytes();
       ProjectCubit.get(context).sendMassage(
         text: '',
         receiverId: widget.userModel!.uid,
         dateTime: DateTime.now().toString(),
-        imageBytes: null,
-        videoBytes: bytes,
+        imageUrl: '',
+        videoUrl: video.path,
       );
     }
   }
 
   Widget buildMassage(MassageModel model) {
-    if (model.imageBytes != null && model.imageBytes!.isNotEmpty) {
+    if (model.imageUrl != null && model.imageUrl!.isNotEmpty) {
       return buildImageMessage(model);
-    } else if (model.videoBytes != null && model.videoBytes!.isNotEmpty) {
+    } else if (model.videoUrl != null && model.videoUrl!.isNotEmpty) {
       return buildVideoMessage(model);
     } else {
       return buildTextMessage(model);
@@ -216,7 +213,7 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
         color: Colors.grey[300],
       ),
       padding: EdgeInsets.symmetric(vertical: 5, horizontal: 10),
-      child: Image.memory(model.imageBytes!),
+      child: Image.file(File(model.imageUrl!)),
     ),
   );
 
@@ -232,14 +229,14 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
         color: Colors.grey[300],
       ),
       padding: EdgeInsets.symmetric(vertical: 5, horizontal: 10),
-      child: VideoPlayerWidget(videoBytes: model.videoBytes!),
+      child: VideoPlayerWidget(videoUrl: model.videoUrl!),
     ),
   );
 
   Widget buildMyMassage(MassageModel model) {
-    if (model.imageBytes != null && model.imageBytes!.isNotEmpty) {
+    if (model.imageUrl != null && model.imageUrl!.isNotEmpty) {
       return buildMyImageMessage(model);
-    } else if (model.videoBytes != null && model.videoBytes!.isNotEmpty) {
+    } else if (model.videoUrl != null && model.videoUrl!.isNotEmpty) {
       return buildMyVideoMessage(model);
     } else {
       return buildMyTextMessage(model);
@@ -274,7 +271,7 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
         color: kPrimaryColor.withOpacity(.3),
       ),
       padding: EdgeInsets.symmetric(vertical: 5, horizontal: 10),
-      child: Image.memory(model.imageBytes!),
+      child: Image.file(File(model.imageUrl!)),
     ),
   );
 
@@ -290,17 +287,15 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
         color: kPrimaryColor.withOpacity(.3),
       ),
       padding: EdgeInsets.symmetric(vertical: 5, horizontal: 10),
-      child: VideoPlayerWidget(videoBytes: model.videoBytes!),
+      child: VideoPlayerWidget(videoUrl: model.videoUrl!),
     ),
   );
 }
 
-
 class VideoPlayerWidget extends StatefulWidget {
-  final Uint8List? videoBytes;
-  final String? videoUrl;
+  final String videoUrl;
 
-  VideoPlayerWidget({this.videoBytes, this.videoUrl});
+  VideoPlayerWidget({required this.videoUrl});
 
   @override
   _VideoPlayerWidgetState createState() => _VideoPlayerWidgetState();
@@ -308,40 +303,13 @@ class VideoPlayerWidget extends StatefulWidget {
 
 class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   late VideoPlayerController _controller;
-  bool _isInitialized = false;
 
   @override
   void initState() {
     super.initState();
-    if (widget.videoBytes != null) {
-      _initializeVideoFromMemory(widget.videoBytes!);
-    } else if (widget.videoUrl != null) {
-      _initializeVideoFromNetwork(widget.videoUrl!);
-    } else {
-      throw ArgumentError('Either videoBytes or videoUrl must be provided.');
-    }
-  }
-
-  void _initializeVideoFromMemory(Uint8List videoBytes) async {
-    final tempDir = await getTemporaryDirectory();
-    final tempFile = File('${tempDir.path}/temp_video.mp4');
-    await tempFile.writeAsBytes(videoBytes);
-
-    _controller = VideoPlayerController.file(tempFile)
+    _controller = VideoPlayerController.file(File(widget.videoUrl))
       ..initialize().then((_) {
-        setState(() {
-          _isInitialized = true;
-        });
-        _controller.setLooping(true);
-      });
-  }
-
-  void _initializeVideoFromNetwork(String videoUrl) {
-    _controller = VideoPlayerController.network(videoUrl)
-      ..initialize().then((_) {
-        setState(() {
-          _isInitialized = true;
-        });
+        setState(() {});
         _controller.setLooping(true);
       });
   }
@@ -354,7 +322,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return _isInitialized
+    return _controller.value.isInitialized
         ? AspectRatio(
       aspectRatio: _controller.value.aspectRatio,
       child: Stack(
@@ -414,5 +382,3 @@ class ControlsOverlay extends StatelessWidget {
     );
   }
 }
-
-

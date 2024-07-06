@@ -7,6 +7,7 @@ import 'package:sports_project/component/default_button.dart';
 import 'package:sports_project/component/other_component.dart';
 import 'package:sports_project/layout/cubit/cubit.dart';
 import 'package:sports_project/layout/cubit/states.dart';
+import 'package:sports_project/layout/project_layout.dart';
 import 'package:sports_project/pages/login_page/login_page.dart';
 
 class SettingScreen extends StatelessWidget {
@@ -14,6 +15,9 @@ class SettingScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocConsumer<ProjectCubit, ProjectStates>(
       listener: (context, state) {
+        if(state is ProjectUploadProfileImageSuccessState){
+          navigateTo(context, ProjectLayout());
+        }
         if (state is ProjectSignOutSuccessState) {
           Navigator.pushNamedAndRemoveUntil(
               context, LoginPage.id, (route) => false);
@@ -56,7 +60,7 @@ class SettingScreen extends StatelessWidget {
                       bio: bioController.text,
                       phone: phoneController.text);
                 },
-                child: Text('Update'),
+                child: Text('UPDATE'),
               ),
             ],
           ),
@@ -64,6 +68,7 @@ class SettingScreen extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.all(8.0),
               child: Column(
+
                 children: [
                   if (state is ProjectUploadUserLoadingState)
                     LinearProgressIndicator(),

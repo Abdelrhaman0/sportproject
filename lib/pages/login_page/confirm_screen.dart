@@ -8,17 +8,22 @@ class ConfirmScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text('check your email to reset the password'),
-          DefaultButton(label: 'back to login page',
-            onTap: (){
-              Navigator.pushNamedAndRemoveUntil(
-                  context, LoginPage.id, (route) => false);
-            },
-            buttonColor: kPrimaryColor,)
-        ],
+      body: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text('check your email to reset the password'),
+            SizedBox(height: 15,),
+            DefaultButton(label: 'back to login page',
+              onTap: (){
+                Navigator.pushNamedAndRemoveUntil(
+                    context, LoginPage.id, (route) => false);
+              },
+              buttonColor: kPrimaryColor,)
+          ],
+        ),
       ),
     ) ;
   }

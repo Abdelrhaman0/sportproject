@@ -44,6 +44,7 @@ class UsersProfileScreen extends StatelessWidget {
             builder: (context) => Padding(
               padding: const EdgeInsets.all(8.0),
               child: SingleChildScrollView(
+                physics: BouncingScrollPhysics(),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [

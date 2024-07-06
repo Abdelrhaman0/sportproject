@@ -104,12 +104,17 @@ class _NewsScreenState extends State<NewsScreen> {
               SizedBox(
                 height: 180,
                 width: double.infinity,
-                child: Image.network(
-                  article.urlToImage ?? "",
+                child: article.urlToImage != null
+                    ? Image.network(
+                  article.urlToImage!,
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) {
                     return const Icon(Icons.image_not_supported);
                   },
+                )
+                    : Image.asset(
+                  'assets/image/football.jpg',
+                  fit: BoxFit.contain,
                 ),
               ),
               const SizedBox(height: 10),

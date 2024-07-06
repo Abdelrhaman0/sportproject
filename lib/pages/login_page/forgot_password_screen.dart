@@ -83,6 +83,7 @@ class ForgotPasswordScreen extends StatelessWidget {
                           label: 'Rest password',
                           onTap: () {
                             LoginCubit.get(context).passwordReset(email: emailController.text);
+                            navigateTo(context, ConfirmScreen());
                           },
                           buttonColor: kPrimaryColor,
                         )

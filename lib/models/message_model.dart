@@ -1,43 +1,37 @@
-import 'dart:typed_data';
+import 'dart:convert';
 
 class MassageModel {
-  String? text;
   String? senderId;
   String? receiverId;
   String? dateTime;
+  String? text;
   String? imageUrl;
   String? videoUrl;
-  Uint8List? imageBytes;
-  Uint8List? videoBytes;
 
   MassageModel({
-    this.text,
     this.senderId,
     this.receiverId,
     this.dateTime,
+    this.text,
     this.imageUrl,
     this.videoUrl,
-    this.imageBytes,
-    this.videoBytes,
   });
-
-  MassageModel.fromJson(Map<String, dynamic> json) {
-    text = json['text'];
-    senderId = json['senderId'];
-    receiverId = json['receiverId'];
-    dateTime = json['dateTime'];
-    imageUrl = json['imageUrl'];
-    videoUrl = json['videoUrl'];
-  }
+  MassageModel.formJson(Map<String, dynamic> json)
+      : senderId = json['senderId'],
+        receiverId = json['receiverId'],
+        dateTime = json['dateTime'],
+        text = json['text'],
+        videoUrl = json["videoUrl"],
+        imageUrl = json["imageUrl"];
 
   Map<String, dynamic> toMap() {
     return {
-      'text': text,
       'senderId': senderId,
       'receiverId': receiverId,
       'dateTime': dateTime,
-      'imageUrl': imageUrl,
+      'text': text,
       'videoUrl': videoUrl,
+      'imageUrl': imageUrl,
     };
   }
 }

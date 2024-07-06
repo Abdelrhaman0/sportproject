@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'package:encrypt/encrypt.dart' as encrypt;
 
 class EncryptionHelper {
@@ -38,32 +37,6 @@ class EncryptionHelper {
     } catch (e) {
       print("Error during decryption: $e");
       return "Decryption failed";
-    }
-  }
-
-  String encryptBytes(Uint8List bytes) {
-    print("Encrypting bytes of length: ${bytes.length}");
-    final iv = encrypt.IV.fromSecureRandom(16);
-    final encrypted = encrypter.encryptBytes(bytes, iv: iv);
-    final encryptedWithIv = iv.base64 + ":" + encrypted.base64;
-    print("Encrypted bytes: $encryptedWithIv");
-    return encryptedWithIv;
-  }
-
-  Uint8List decryptBytes(String encryptedBytes) {
-    print("Decrypting bytes: $encryptedBytes");
-    try {
-      final parts = encryptedBytes.split(':');
-      if (parts.length != 2) {
-        throw FormatException("Invalid encrypted bytes format");
-      }
-      final iv = encrypt.IV.fromBase64(parts[0]);
-      final encryptedData = parts[1];
-      final decrypted = encrypter.decryptBytes(encrypt.Encrypted.fromBase64(encryptedData), iv: iv);
-      return Uint8List.fromList(decrypted);
-    } catch (e) {
-      print("Error during decryption: $e");
-      return Uint8List(0);
     }
   }
 }
